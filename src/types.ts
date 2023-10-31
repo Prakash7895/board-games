@@ -1,4 +1,7 @@
 import { ReactNode } from 'react';
+import { Server as NetServer, Socket } from 'net';
+import { NextApiResponse } from 'next';
+import { Server as SocketIOServer } from 'socket.io';
 
 export enum ButtonTypes {
   primary = 1,
@@ -47,4 +50,19 @@ export type SelectedMarbles = 1 | 2 | 3;
 export enum OpponentType {
   bot = 'bot',
   player = 'player',
+}
+
+export type NextApiResponseServerIO = NextApiResponse & {
+  socket: Socket & {
+    server: NetServer & {
+      io: SocketIOServer;
+    };
+  };
+};
+
+export enum EmitTypes {
+  ONLINE = 'online',
+  NEW_USER = 'new-user',
+  NEW_MESSAGE = 'new-message',
+  EMIT_MESSAGE = 'emit-message',
 }

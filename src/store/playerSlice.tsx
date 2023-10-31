@@ -1,7 +1,7 @@
 import { RootState } from '.';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-interface Player {
+export interface Player {
   name: string;
   uuid: string;
   isPlaying: boolean;

@@ -2,6 +2,8 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Patrick_Hand } from 'next/font/google';
 import ReduxProvider from '@/store/ReduxProvider';
+import SocketProvider from '@/components/SocketProvider';
+import NameConfirmation from '@/components/NameConfirmation';
 
 const inter = Patrick_Hand({ weight: '400', subsets: ['latin'] });
 
@@ -18,7 +20,12 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className={inter.className}>
-        <ReduxProvider>{children}</ReduxProvider>
+        <ReduxProvider>
+          <SocketProvider>
+            <NameConfirmation />
+            {children}
+          </SocketProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

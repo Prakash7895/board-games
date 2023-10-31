@@ -5,14 +5,14 @@ import Dialog from './Dialog';
 import { useDispatch } from 'react-redux';
 import { updateUser } from '@/store/userSlice';
 import React, { useEffect, useState } from 'react';
-import { setValueToLocalStorage, getValueFromLocalStorage } from '@/utils';
 
 const NameConfirmation = () => {
   const [name, setName] = useState('');
   const [show, setShow] = useState(false);
   const dispatch = useDispatch();
 
-  const savedName = getValueFromLocalStorage('name');
+  const value = localStorage.getItem('name');
+  const savedName = value ? JSON.parse(value) : null;
 
   useEffect(() => {
     setShow(!savedName);
@@ -40,7 +40,7 @@ const NameConfirmation = () => {
             onClick={() => {
               if (name.trim().length) {
                 setShow(false);
-                setValueToLocalStorage('name', name.trim());
+                localStorage.setItem('name', JSON.stringify(name.trim()));
                 dispatch(
                   updateUser({
                     name: name.trim(),

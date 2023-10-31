@@ -14,7 +14,6 @@ import {
   tikadiState,
 } from '@/store/tikadiSlice';
 import { duelState, updateRoom } from '@/store/duelSlice';
-import { getValueFromLocalStorage } from '@/utils';
 
 export default function PlayGround() {
   const router = useRouter();
@@ -55,7 +54,8 @@ export default function PlayGround() {
   };
 
   useEffect(() => {
-    const savedRoom = getValueFromLocalStorage('duel-room');
+    const value = localStorage.getItem('duel-room');
+    const savedRoom = value ? JSON.parse(value) : null;
     console.log('ROOM', room);
     console.log('ROOMsavedRoom', savedRoom);
     if (savedRoom && savedRoom !== room) {

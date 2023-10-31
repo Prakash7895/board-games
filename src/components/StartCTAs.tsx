@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { userState } from '@/store/userSlice';
 import { initializeGame } from '@/store/tikadiSlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { getUniqueRoomName, setValueToLocalStorage } from '@/utils';
+import { getUniqueRoomName } from '@/utils';
 import { updateCurrentPlayer, updateRoom } from '@/store/duelSlice';
 
 const StartCTAs = () => {
@@ -18,7 +18,7 @@ const StartCTAs = () => {
 
   const createRoom = () => {
     const newRoom = getUniqueRoomName();
-    setValueToLocalStorage('duel-room', newRoom);
+    localStorage.setItem('duel-room', JSON.stringify(newRoom));
     dispatch(initializeGame({ opponentType: OpponentType.player }));
     dispatch(
       updateCurrentPlayer({
@@ -32,7 +32,7 @@ const StartCTAs = () => {
   };
 
   const joinRoom = () => {
-    setValueToLocalStorage('duel-room', roomName);
+    localStorage.setItem('duel-room', JSON.stringify(roomName));
     dispatch(initializeGame({ opponentType: OpponentType.player }));
     dispatch(
       updateCurrentPlayer({

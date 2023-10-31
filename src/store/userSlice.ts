@@ -1,4 +1,3 @@
-import { getValueFromLocalStorage } from '@/utils';
 import { RootState } from '.';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
@@ -9,7 +8,7 @@ interface UserState {
 
 const initialState: UserState = {
   name: '',
-  uuid: getValueFromLocalStorage('uuid') ?? '',
+  uuid: '',
 };
 
 export const userSlice = createSlice({

@@ -1,14 +1,5 @@
 import { MarblePositions, Position, SelectedMarbles } from './types';
 
-export const getValueFromLocalStorage = (key: string) => {
-  const value = localStorage.getItem(key);
-  return value ? JSON.parse(value) : null;
-};
-
-export const setValueToLocalStorage = (key: string, value: string | number) => {
-  localStorage.setItem(key, JSON.stringify(value));
-};
-
 const allPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export const getNextPossibleTikadiPositions = (num?: Position) => {

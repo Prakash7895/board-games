@@ -1,13 +1,13 @@
 'use client';
 import { Message } from '@/types';
-import { getValueFromLocalStorage } from '@/utils';
 import React, { useEffect, useRef, useState } from 'react';
 
 const ChatWindow = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const savedRoom = getValueFromLocalStorage('duel-room');
+  const value = localStorage.getItem('duel-room');
+  const savedRoom = value ? JSON.parse(value) : null;
 
   const sendMessage = () => {
     if (message.trim().length) {
