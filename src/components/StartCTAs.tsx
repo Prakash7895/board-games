@@ -2,19 +2,22 @@
 import Input from './Input';
 import Link from 'next/link';
 import { OpponentType } from '@/types';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { userState } from '@/store/userSlice';
 import { initializeGame } from '@/store/tikadiSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUniqueRoomName } from '@/utils';
 import { updateCurrentPlayer, updateRoom } from '@/store/duelSlice';
+import { SocketContext } from './SocketProvider';
 
 const StartCTAs = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [roomName, setRoomName] = useState('');
   const { name, uuid } = useSelector(userState);
+
+  const { createOrJoinRoom } = useContext(SocketContext);
 
   const createRoom = () => {
     const newRoom = getUniqueRoomName();
@@ -28,6 +31,7 @@ const StartCTAs = () => {
       })
     );
     dispatch(updateRoom(newRoom));
+    createOrJoinRoom(newRoom);
     router.push('/play');
   };
 
@@ -42,6 +46,7 @@ const StartCTAs = () => {
       })
     );
     dispatch(updateRoom(roomName));
+    createOrJoinRoom(roomName);
     router.push('/play');
   };
 

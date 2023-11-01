@@ -33,6 +33,25 @@ export default function handler(
         socket.broadcast.emit(EmitTypes.NEW_MESSAGE, msg);
       });
 
+      socket.on(EmitTypes.CREATE_OR_JOIN_ROOM, async (room) => {
+        await socket.join(room);
+        socket.data.room = room;
+
+        socket
+          .to(room)
+          .emit(
+            EmitTypes.USER_JOINED_ROOM,
+            `${socket.data.name} has joined...`
+          );
+      });
+
+      socket.on(EmitTypes.SEND_MESSAGE_TO_ROOM, (roomMsgObj) => {
+        socket.to(roomMsgObj.room).emit(EmitTypes.NEW_MESSAGE_IN_ROOM, {
+          message: roomMsgObj.message,
+          from: roomMsgObj.from,
+        });
+      });
+
       socket.on('disconnect', function (reason) {
         console.log('Got disconnect!', reason);
         console.log('Got disconnect! DESC', socket.data);
@@ -41,6 +60,9 @@ export default function handler(
         if (idx >= 0) {
           sockets.splice(idx, 1);
         }
+        socket
+          .to(socket.data.room)
+          .emit(EmitTypes.USER_LEFT_ROOM, 'USER LEFT THE ROOM...');
         socket.broadcast.emit(EmitTypes.NEW_USER, sockets);
       });
     });

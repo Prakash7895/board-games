@@ -26,7 +26,7 @@ const Tikadi = () => {
   const state = useSelector(tikadiState);
   const dispatch = useDispatch();
 
-  console.log('STATE', state);
+  // console.log('STATE', state);
 
   const moveMarbleToThisPosition = (pos: Position) => {
     if (selectedMarble === -1) {

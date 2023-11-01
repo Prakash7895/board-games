@@ -4,6 +4,7 @@ import tikadiSlice from './tikadiSlice';
 import scoreSlice from './scoreSlice';
 import userSlice from './userSlice';
 import duelSlice from './duelSlice';
+import chatSlice from './chatSlice';
 
 const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
     scoreSlice,
     userSlice,
     duelSlice,
+    chatSlice,
   },
 });
 

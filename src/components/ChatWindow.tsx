@@ -1,18 +1,28 @@
 'use client';
 import { Message } from '@/types';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
+import { SocketContext } from './SocketProvider';
+import { useDispatch, useSelector } from 'react-redux';
+import { appendMessage, chatState } from '@/store/chatSlice';
 
 const ChatWindow = () => {
+  const dispatch = useDispatch();
   const ref = useRef<HTMLDivElement>(null);
+  const { chats } = useSelector(chatState);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
   const value = localStorage.getItem('duel-room');
   const savedRoom = value ? JSON.parse(value) : null;
 
+  const { sendMessageToRoom } = useContext(SocketContext);
+
   const sendMessage = () => {
     if (message.trim().length) {
-      setMessages((prev) =>
-        prev.concat([{ message, isIncoming: !!(Math.random() < 0.5) }])
+      sendMessageToRoom(message, savedRoom);
+      dispatch(
+        appendMessage({
+          isIncoming: false,
+          message: message,
+        })
       );
       setMessage('');
     }
@@ -22,7 +32,7 @@ const ChatWindow = () => {
     if (ref.current) {
       ref.current.scrollTop = ref.current?.scrollHeight;
     }
-  }, [messages]);
+  }, [chats]);
 
   return (
     <div className='border border-gray-600 overflow-hidden rounded-lg flex flex-col-reverse h-[30rem] min-w-[20rem]'>
@@ -57,9 +67,9 @@ const ChatWindow = () => {
         </button>
       </div>
       <div className='overflow-y-auto no-scrollbar flex-1 p-2' ref={ref}>
-        {messages.length ? (
+        {chats.length ? (
           <div className='flex flex-col'>
-            {messages.map((el, idx) => (
+            {chats.map((el, idx) => (
               <div key={el.message + idx}>
                 <p
                   className={`bg-stone-600 break-words whitespace-break-spaces my-2 p-1 px-2 rounded-lg w-4/5 ${

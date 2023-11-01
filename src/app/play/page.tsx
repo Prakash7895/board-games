@@ -56,19 +56,18 @@ export default function PlayGround() {
   useEffect(() => {
     const value = localStorage.getItem('duel-room');
     const savedRoom = value ? JSON.parse(value) : null;
-    console.log('ROOM', room);
-    console.log('ROOMsavedRoom', savedRoom);
+
     if (savedRoom && savedRoom !== room) {
       dispatch(updateRoom(savedRoom));
       dispatch(initializeGame({ opponentType: OpponentType.player }));
     }
 
-    return () => {
-      console.log('CLEAN-UP');
-      window.addEventListener('unload', function () {
-        console.log('UNLOADED', savedRoom);
-      });
-    };
+    // return () => {
+    //   console.log('CLEAN-UP');
+    //   window.addEventListener('unload', function () {
+    //     console.log('UNLOADED', savedRoom);
+    //   });
+    // };
   }, [room]);
 
   return (

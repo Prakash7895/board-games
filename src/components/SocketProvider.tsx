@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateUser, userState } from '@/store/userSlice';
 import { EmitTypes } from '@/types';
 import { Player, updatePlayers } from '@/store/playerSlice';
+import { appendMessage } from '@/store/chatSlice';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -15,7 +16,14 @@ interface DefaultEventsMap {
 export const SocketContext = React.createContext<{
   socket: Socket<DefaultEventsMap, DefaultEventsMap> | null;
   emitMessage: (message: string) => void;
-}>({ socket: null, emitMessage: (msg: string) => {} });
+  createOrJoinRoom: (message: string) => void;
+  sendMessageToRoom: (message: string, room: string) => void;
+}>({
+  socket: null,
+  emitMessage: (msg: string) => {},
+  createOrJoinRoom: (msg: string) => {},
+  sendMessageToRoom: (msg: string, room: string) => {},
+});
 
 const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket<
@@ -84,12 +92,38 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       });
 
       socket.on(EmitTypes.NEW_USER, onNewUserAdded);
+
+      socket?.on(EmitTypes.USER_JOINED_ROOM, (msg) => {
+        console.log('USER_JOINED_ROOM:', msg);
+      });
+
+      socket?.on(EmitTypes.USER_LEFT_ROOM, (msg) => {
+        console.log('USER_LEFT_ROOM:', msg);
+      });
+
+      socket.on(EmitTypes.NEW_MESSAGE_IN_ROOM, (msgObj) => {
+        console.log('NEW_MESSAGE_IN_ROOM', msgObj);
+        dispatch(
+          appendMessage({
+            isIncoming: true,
+            message: msgObj.message,
+          })
+        );
+      });
     }
 
+    // return () => {
+    //   console.log('ROOT CLEANING UP');
+    //   // socket?.off(EmitTypes.NEW_USER, onNewUserAdded);
+    //   socket?.disconnect(true);
+    // };
+
     return () => {
-      console.log('CLEANING UP');
-      // socket?.off(EmitTypes.NEW_USER, onNewUserAdded);
-      socket?.disconnect(true);
+      console.log('ROOT CLEANING UP');
+      window.addEventListener('unload', function () {
+        socket?.disconnect(true);
+        console.log('UNLOADED');
+      });
     };
   }, [socket, uuid, name]);
 
@@ -100,8 +134,26 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     });
   };
 
+  const createOrJoinRoom = (room: string) => {
+    console.log('Creaing room on UI', room);
+    socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim());
+  };
+
+  const sendMessageToRoom = (msg: string, room: string) => {
+    socket?.emit(EmitTypes.SEND_MESSAGE_TO_ROOM, {
+      room: room,
+      from: {
+        uuid,
+        name,
+      },
+      message: msg,
+    });
+  };
+
   return (
-    <SocketContext.Provider value={{ socket, emitMessage }}>
+    <SocketContext.Provider
+      value={{ socket, emitMessage, createOrJoinRoom, sendMessageToRoom }}
+    >
       {children}
     </SocketContext.Provider>
   );

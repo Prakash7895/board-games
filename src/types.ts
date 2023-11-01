@@ -65,4 +65,9 @@ export enum EmitTypes {
   NEW_USER = 'new-user',
   NEW_MESSAGE = 'new-message',
   EMIT_MESSAGE = 'emit-message',
+  USER_LEFT_ROOM = 'user-left-room',
+  USER_JOINED_ROOM = 'user-joined-room',
+  CREATE_OR_JOIN_ROOM = 'create-or-join-room',
+  NEW_MESSAGE_IN_ROOM = 'new-message-in-room',
+  SEND_MESSAGE_TO_ROOM = 'send-message-to-room',
 }

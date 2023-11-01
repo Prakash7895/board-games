@@ -11,10 +11,10 @@ const NameConfirmation = () => {
   const [show, setShow] = useState(false);
   const dispatch = useDispatch();
 
-  const value = localStorage.getItem('name');
-  const savedName = value ? JSON.parse(value) : null;
-
   useEffect(() => {
+    const value = localStorage.getItem('name');
+    const savedName = value ? JSON.parse(value) : null;
+
     setShow(!savedName);
     if (savedName) {
       dispatch(
@@ -23,7 +23,7 @@ const NameConfirmation = () => {
         })
       );
     }
-  }, [savedName]);
+  }, []);
 
   return show ? (
     <Dialog>
