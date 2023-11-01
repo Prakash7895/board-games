@@ -1,7 +1,7 @@
 'use client';
 import Ground from '@/components/Ground';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Confetti from '@/components/Confetti';
 import ChatWindow from '@/components/ChatWindow';
 import ScoreBoard from '@/components/ScoreBoard';
@@ -14,6 +14,7 @@ import {
   tikadiState,
 } from '@/store/tikadiSlice';
 import { duelState, updateRoom } from '@/store/duelSlice';
+import { SocketContext } from '@/components/SocketProvider';
 
 export default function PlayGround() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function PlayGround() {
   const { turn, opponentType, winner } = useSelector(tikadiState);
   const [showPlayAgainBtn, setShowPlayAgainBtn] = useState(false);
   const { room } = useSelector(duelState);
+  const { createOrJoinRoom, socket } = useContext(SocketContext);
 
   useEffect(() => {
     let interVal: NodeJS.Timeout;
@@ -61,6 +63,9 @@ export default function PlayGround() {
       dispatch(updateRoom(savedRoom));
       dispatch(initializeGame({ opponentType: OpponentType.player }));
     }
+    if (socket) {
+      createOrJoinRoom(savedRoom);
+    }
 
     // return () => {
     //   console.log('CLEAN-UP');
@@ -68,7 +73,7 @@ export default function PlayGround() {
     //     console.log('UNLOADED', savedRoom);
     //   });
     // };
-  }, [room]);
+  }, [room, socket]);
 
   return (
     <div className='min-h-screen p-5'>

@@ -34,15 +34,26 @@ export default function handler(
       });
 
       socket.on(EmitTypes.CREATE_OR_JOIN_ROOM, async (room) => {
+        console.log(socket.data.name, 'joining room', room);
         await socket.join(room);
         socket.data.room = room;
 
-        socket
-          .to(room)
-          .emit(
-            EmitTypes.USER_JOINED_ROOM,
-            `${socket.data.name} has joined...`
-          );
+        const clients = io.sockets.adapter.rooms.get(room);
+
+        const idsArr = clients ? Array.from(clients) : [];
+
+        const clientsArr = [];
+        for (let i = 0; i < idsArr.length; i++) {
+          const client = io.sockets.sockets.get(idsArr[i]);
+          clientsArr.push({
+            uuid: client?.data.uuid,
+            name: client?.data.name,
+          });
+        }
+        console.log('clientsArr:', clientsArr);
+
+        socket.to(room).emit(EmitTypes.USER_JOINED_ROOM, clientsArr);
+        // socket.to(socket.id).emit(EmitTypes.USER_JOINED_ROOM, clientsArr);
       });
 
       socket.on(EmitTypes.SEND_MESSAGE_TO_ROOM, (roomMsgObj) => {

@@ -31,7 +31,7 @@ const StartCTAs = () => {
       })
     );
     dispatch(updateRoom(newRoom));
-    createOrJoinRoom(newRoom);
+    // createOrJoinRoom(newRoom);
     router.push('/play');
   };
 
