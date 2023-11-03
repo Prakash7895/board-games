@@ -52,6 +52,30 @@ export const duelSlice = createSlice({
         room: payload,
       };
     },
+    updateOnlineStatus: (
+      state: DuelState,
+      {
+        payload,
+      }: PayloadAction<{
+        uuid: string;
+        isOnline: boolean;
+      }>
+    ) => {
+      if (state.currentPlayer && payload.uuid === state.currentPlayer?.uuid) {
+        state.currentPlayer = {
+          ...state.currentPlayer,
+          isOnline: payload.isOnline,
+        };
+      } else if (
+        state.otherPlayer &&
+        payload.uuid === state.otherPlayer?.uuid
+      ) {
+        state.otherPlayer = {
+          ...state.otherPlayer,
+          isOnline: payload.isOnline,
+        };
+      }
+    },
     resetDuelState: () => initialState,
   },
 });
@@ -60,6 +84,7 @@ export const {
   startDuel,
   updateRoom,
   resetDuelState,
+  updateOnlineStatus,
   updateCurrentPlayer,
   updateOpponentPlayer,
 } = duelSlice.actions;

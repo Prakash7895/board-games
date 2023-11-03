@@ -5,9 +5,15 @@ import { io } from 'socket.io-client';
 import React, { useEffect, ReactNode, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUser, userState } from '@/store/userSlice';
-import { EmitTypes } from '@/types';
+import { EmitTypes, PlayerTurn } from '@/types';
 import { Player, updatePlayers } from '@/store/playerSlice';
 import { appendMessage } from '@/store/chatSlice';
+import {
+  duelState,
+  updateOnlineStatus,
+  updateOpponentPlayer,
+} from '@/store/duelSlice';
+import { updateGameState } from '@/store/tikadiSlice';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -33,6 +39,8 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const { uuid, name } = useSelector(userState);
   const dispatch = useDispatch();
+
+  const { otherPlayer } = useSelector(duelState);
 
   useEffect(() => {
     let uuidToUse = uuid;
@@ -93,12 +101,32 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       socket.on(EmitTypes.NEW_USER, onNewUserAdded);
 
-      socket?.on(EmitTypes.USER_JOINED_ROOM, (msg) => {
-        console.log('USER_JOINED_ROOM:', msg);
+      socket?.on(EmitTypes.USER_JOINED_ROOM, (players) => {
+        console.log('USER_JOINED_ROOM:', players);
+        const opponentPlayer: Player = players.find(
+          (p: Player) => p.uuid !== uuid
+        );
+        if (opponentPlayer) {
+          dispatch(
+            updateOpponentPlayer({
+              name: opponentPlayer.name,
+              uuid: opponentPlayer.uuid,
+              isOnline: true,
+            })
+          );
+        }
       });
 
-      socket?.on(EmitTypes.USER_LEFT_ROOM, (msg) => {
-        console.log('USER_LEFT_ROOM:', msg);
+      socket?.on(EmitTypes.USER_LEFT_ROOM, (player) => {
+        console.log('USER_LEFT_ROOM', player);
+        if (player.uuid !== uuid) {
+          dispatch(
+            updateOnlineStatus({
+              uuid: player.uuid,
+              isOnline: false,
+            })
+          );
+        }
       });
 
       socket.on(EmitTypes.NEW_MESSAGE_IN_ROOM, (msgObj) => {
@@ -109,6 +137,23 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
             message: msgObj.message,
           })
         );
+      });
+
+      socket.on(EmitTypes.GAME_STATE_CHANGE, (state) => {
+        console.log('GAME_STATE_CHANGE', state);
+        console.log('GAME_STATE_CHANGE otherPlayer', otherPlayer);
+        if (otherPlayer) {
+          dispatch(
+            updateGameState({
+              player1: state[uuid],
+              player2: state[otherPlayer.uuid],
+              turn:
+                state.turn === uuid
+                  ? PlayerTurn.currentPlayer
+                  : PlayerTurn.otherPlayer,
+            })
+          );
+        }
       });
     }
 
@@ -125,7 +170,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         console.log('UNLOADED');
       });
     };
-  }, [socket, uuid, name]);
+  }, [socket, uuid, name, otherPlayer]);
 
   const emitMessage = (msg: string) => {
     socket?.emit(EmitTypes.EMIT_MESSAGE, {
@@ -136,18 +181,22 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const createOrJoinRoom = (room: string) => {
     console.log('Creaing room on UI', room);
-    socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim());
+    if (room) {
+      socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim());
+    }
   };
 
   const sendMessageToRoom = (msg: string, room: string) => {
-    socket?.emit(EmitTypes.SEND_MESSAGE_TO_ROOM, {
-      room: room,
-      from: {
-        uuid,
-        name,
-      },
-      message: msg,
-    });
+    if (room) {
+      socket?.emit(EmitTypes.SEND_MESSAGE_TO_ROOM, {
+        room: room,
+        from: {
+          uuid,
+          name,
+        },
+        message: msg,
+      });
+    }
   };
 
   return (

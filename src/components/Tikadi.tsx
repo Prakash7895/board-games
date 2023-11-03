@@ -1,5 +1,11 @@
-import React, { useEffect } from 'react';
-import { OpponentType, PlayerTurn, Position, SelectedMarbles } from '@/types';
+import React, { useContext, useEffect } from 'react';
+import {
+  EmitTypes,
+  OpponentType,
+  PlayerTurn,
+  Position,
+  SelectedMarbles,
+} from '@/types';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   moveToSelectedPosition,
@@ -12,6 +18,8 @@ import {
   getNextPossibleTikadiPositions,
 } from '@/utils';
 import { coinOne, coinTwo } from './Marbles';
+import { SocketContext } from './SocketProvider';
+import { duelState } from '@/store/duelSlice';
 
 const Tikadi = () => {
   const {
@@ -24,9 +32,11 @@ const Tikadi = () => {
     nextPossiblePositions,
   } = useSelector(tikadiState);
   const state = useSelector(tikadiState);
+  const { room, otherPlayer, currentPlayer } = useSelector(duelState);
   const dispatch = useDispatch();
+  const { socket } = useContext(SocketContext);
 
-  // console.log('STATE', state);
+  console.log('STATE', JSON.parse(JSON.stringify(state)));
 
   const moveMarbleToThisPosition = (pos: Position) => {
     if (selectedMarble === -1) {
@@ -41,6 +51,22 @@ const Tikadi = () => {
       const idx = [...player1, ...player2].findIndex((el) => el === pos);
       if (idx < 0) {
         dispatch(moveToSelectedPosition(pos));
+        if (
+          opponentType !== OpponentType.bot &&
+          otherPlayer &&
+          socket &&
+          currentPlayer &&
+          room
+        ) {
+          console.log('EMITING STATE CHANGE....');
+          socket.emit(EmitTypes.UPDATE_GAME_STATE, {
+            room: room.trim(),
+            newPos: pos,
+            playerUUID: currentPlayer.uuid,
+            turn: otherPlayer.uuid,
+            marbleNum: selectedMarble,
+          });
+        }
       }
     }
   };

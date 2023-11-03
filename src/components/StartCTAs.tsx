@@ -1,64 +1,43 @@
 'use client';
 import Input from './Input';
-import Link from 'next/link';
-import { OpponentType } from '@/types';
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { userState } from '@/store/userSlice';
-import { initializeGame } from '@/store/tikadiSlice';
-import { useDispatch, useSelector } from 'react-redux';
 import { getUniqueRoomName } from '@/utils';
-import { updateCurrentPlayer, updateRoom } from '@/store/duelSlice';
-import { SocketContext } from './SocketProvider';
+import { useDispatch } from 'react-redux';
+import { initializeGame } from '@/store/tikadiSlice';
+import { OpponentType } from '@/types';
 
 const StartCTAs = () => {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [roomName, setRoomName] = useState('');
-  const { name, uuid } = useSelector(userState);
-
-  const { createOrJoinRoom } = useContext(SocketContext);
+  const dispatch = useDispatch();
 
   const createRoom = () => {
     const newRoom = getUniqueRoomName();
     localStorage.setItem('duel-room', JSON.stringify(newRoom));
-    dispatch(initializeGame({ opponentType: OpponentType.player }));
-    dispatch(
-      updateCurrentPlayer({
-        name: name,
-        uuid: uuid,
-        isOnline: true,
-      })
-    );
-    dispatch(updateRoom(newRoom));
-    // createOrJoinRoom(newRoom);
     router.push('/play');
   };
 
   const joinRoom = () => {
     localStorage.setItem('duel-room', JSON.stringify(roomName));
-    dispatch(initializeGame({ opponentType: OpponentType.player }));
-    dispatch(
-      updateCurrentPlayer({
-        name: name,
-        uuid: uuid,
-        isOnline: true,
-      })
-    );
-    dispatch(updateRoom(roomName));
-    createOrJoinRoom(roomName);
+    router.push('/play');
+  };
+
+  const startNewGame = () => {
+    localStorage.removeItem('duel-room');
+    dispatch(initializeGame({ opponentType: OpponentType.bot }));
     router.push('/play');
   };
 
   return (
     <div className='flex flex-col'>
       <div className='flex gap-5'>
-        <Link
+        <button
           className='btn w-32 glass btn-warning text-gray-400 hover:text-gray-700'
-          href={'/play'}
+          onClick={startNewGame}
         >
           New Game
-        </Link>
+        </button>
         <button
           className='btn w-32 glass btn-warning text-gray-400 hover:text-gray-700'
           onClick={createRoom}

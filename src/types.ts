@@ -67,6 +67,8 @@ export enum EmitTypes {
   EMIT_MESSAGE = 'emit-message',
   USER_LEFT_ROOM = 'user-left-room',
   USER_JOINED_ROOM = 'user-joined-room',
+  GAME_STATE_CHANGE = 'game-state-change',
+  UPDATE_GAME_STATE = 'update-game-state',
   CREATE_OR_JOIN_ROOM = 'create-or-join-room',
   NEW_MESSAGE_IN_ROOM = 'new-message-in-room',
   SEND_MESSAGE_TO_ROOM = 'send-message-to-room',

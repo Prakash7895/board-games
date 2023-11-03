@@ -13,12 +13,14 @@ import {
   resetTikadiState,
   tikadiState,
 } from '@/store/tikadiSlice';
-import { duelState, updateRoom } from '@/store/duelSlice';
+import { duelState, updateCurrentPlayer, updateRoom } from '@/store/duelSlice';
 import { SocketContext } from '@/components/SocketProvider';
+import { userState } from '@/store/userSlice';
 
 export default function PlayGround() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { name, uuid } = useSelector(userState);
   const { turn, opponentType, winner } = useSelector(tikadiState);
   const [showPlayAgainBtn, setShowPlayAgainBtn] = useState(false);
   const { room } = useSelector(duelState);
@@ -63,8 +65,20 @@ export default function PlayGround() {
       dispatch(updateRoom(savedRoom));
       dispatch(initializeGame({ opponentType: OpponentType.player }));
     }
-    if (socket) {
-      createOrJoinRoom(savedRoom);
+    if (name || uuid) {
+      dispatch(
+        updateCurrentPlayer({
+          name: name,
+          uuid: uuid,
+          isOnline: true,
+        })
+      );
+    }
+    let interval: NodeJS.Timeout;
+    if (opponentType !== OpponentType.bot && socket) {
+      interval = setTimeout(() => {
+        createOrJoinRoom(savedRoom);
+      }, 100);
     }
 
     // return () => {
@@ -73,7 +87,10 @@ export default function PlayGround() {
     //     console.log('UNLOADED', savedRoom);
     //   });
     // };
-  }, [room, socket]);
+    return () => {
+      clearTimeout(interval);
+    };
+  }, [room, socket, name, uuid]);
 
   return (
     <div className='min-h-screen p-5'>
@@ -98,9 +115,17 @@ export default function PlayGround() {
           )}
         </div>
         {opponentType === OpponentType.player && (
-          <p className='text-center'>
-            Share this room id with your friend: {room}
-          </p>
+          <div className='text-center flex items-center justify-center gap-2'>
+            <p>Share this room id with your friend: {room}</p>
+            <img
+              src='./copy.svg'
+              className='w-7 h-7 cursor-pointer'
+              title='Click to copy room id'
+              onClick={() => {
+                navigator.clipboard.writeText(room);
+              }}
+            />
+          </div>
         )}
       </div>
       <div className='flex justify-around h-full w-full'>

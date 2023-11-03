@@ -39,6 +39,35 @@ export const tikadiSlice = createSlice({
   name: 'tikadi',
   initialState,
   reducers: {
+    updateGameState: (
+      state: TikadiState,
+      {
+        payload,
+      }: PayloadAction<{
+        player1: MarblePositions;
+        player2: MarblePositions;
+        turn: PlayerTurn;
+      }>
+    ) => {
+      state.player1 = payload.player1;
+      state.player2 = payload.player2;
+
+      const idx = payload.player1.findIndex((el) => el < 0);
+      state.selectedMarble = (idx < 0 ? idx : idx + 1) as SelectedMarbles;
+
+      const winCheckPlayer1 = checkIfWon([...state.player1]) >= 0;
+      console.log('WIN Check Player 1', winCheckPlayer1);
+
+      const winCheckPlayer2 = checkIfWon([...state.player2]) >= 0;
+      console.log('WIN Check Player 2', winCheckPlayer2);
+      if (winCheckPlayer1 || winCheckPlayer2) {
+        state.winner = winCheckPlayer1
+          ? PlayerTurn.currentPlayer
+          : PlayerTurn.otherPlayer;
+      } else {
+        state.turn = payload.turn;
+      }
+    },
     updatePosition: (
       state: TikadiState,
       { payload }: PayloadAction<updatePositionPayload>
@@ -60,8 +89,7 @@ export const tikadiSlice = createSlice({
 
       state[`player${state.turn}`] = updatedPosition;
 
-      const winCheck = checkIfWon(updatedPosition) >= 0;
-      console.log('WIN Check', winCheck);
+      const winCheck = checkIfWon([...updatedPosition]) >= 0;
 
       if (winCheck) {
         state.winner = state.turn;
@@ -121,9 +149,10 @@ export const tikadiSlice = createSlice({
 });
 
 export const {
-  initializeGame,
   selectMarble,
+  initializeGame,
   updatePosition,
+  updateGameState,
   resetTikadiState,
   moveToSelectedPosition,
 } = tikadiSlice.actions;
