@@ -64,6 +64,9 @@ export default function handler(
             await socket.join(room);
             socket.data.room = room;
 
+            const clients = io.sockets.adapter.rooms.get(room);
+            const idsArr = clients ? Array.from(clients) : [];
+
             const clientsArr = [];
             for (let i = 0; i < idsArr.length; i++) {
               const client = io.sockets.sockets.get(idsArr[i]);

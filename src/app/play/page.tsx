@@ -74,8 +74,17 @@ export default function PlayGround() {
 
     if (savedRoom && savedRoom !== room) {
       dispatch(updateRoom(savedRoom));
-      dispatch(initializeGame({ opponentType: OpponentType.player }));
+
+      dispatch(
+        initializeGame({
+          opponentType: OpponentType.player,
+          ...(otherPlayer ? {} : { turn: -1 }),
+        })
+      );
     }
+  }, [room, otherPlayer]);
+
+  useEffect(() => {
     if (name || uuid) {
       dispatch(
         updateCurrentPlayer({
@@ -86,18 +95,12 @@ export default function PlayGround() {
       );
     }
     let interval: NodeJS.Timeout;
-    if (opponentType !== OpponentType.bot && socket) {
+    if (opponentType !== OpponentType.bot && socket && room) {
       interval = setTimeout(() => {
-        createOrJoinRoom(savedRoom);
+        createOrJoinRoom(room);
       }, 100);
     }
 
-    // return () => {
-    //   console.log('CLEAN-UP');
-    //   window.addEventListener('unload', function () {
-    //     console.log('UNLOADED', savedRoom);
-    //   });
-    // };
     return () => {
       clearTimeout(interval);
     };

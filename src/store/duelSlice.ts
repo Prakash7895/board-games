@@ -54,7 +54,6 @@ export const duelSlice = createSlice({
       state.state = GameState.started;
     },
     updateRoom: (state: DuelState, { payload }: PayloadAction<string>) => {
-      // console.log('updateRoom', payload);
       return {
         ...state,
         room: payload,

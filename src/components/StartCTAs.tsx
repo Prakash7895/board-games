@@ -2,7 +2,7 @@
 import Input from './Input';
 import React, { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUniqueRoomName } from '@/utils';
+import { getRandom, getUniqueRoomName } from '@/utils';
 import { useDispatch } from 'react-redux';
 import { initializeGame, resetTikadiState } from '@/store/tikadiSlice';
 import { OpponentType } from '@/types';
@@ -48,7 +48,9 @@ const StartCTAs = () => {
   const startNewGame = () => {
     resetRootState();
     localStorage.removeItem('duel-room');
-    dispatch(initializeGame({ opponentType: OpponentType.bot }));
+    dispatch(
+      initializeGame({ opponentType: OpponentType.bot, turn: getRandom(1, 3) })
+    );
     router.push('/play');
   };
 

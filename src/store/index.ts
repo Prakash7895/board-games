@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import logger from 'redux-logger';
 import playerSlice from './playerSlice';
 import tikadiSlice from './tikadiSlice';
 import scoreSlice from './scoreSlice';
@@ -14,6 +15,9 @@ const store = configureStore({
     userSlice,
     duelSlice,
     chatSlice,
+  },
+  middleware(getDefaultMiddleware) {
+    return getDefaultMiddleware().concat(logger);
   },
 });
 

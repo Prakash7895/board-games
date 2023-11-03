@@ -31,12 +31,9 @@ const Tikadi = () => {
     selectedMarble,
     nextPossiblePositions,
   } = useSelector(tikadiState);
-  const state = useSelector(tikadiState);
   const { room, otherPlayer, currentPlayer } = useSelector(duelState);
   const dispatch = useDispatch();
   const { socket } = useContext(SocketContext);
-
-  console.log('STATE', JSON.parse(JSON.stringify(state)));
 
   const moveMarbleToThisPosition = (pos: Position) => {
     if (selectedMarble === -1) {
@@ -81,7 +78,7 @@ const Tikadi = () => {
   };
 
   const isSelectable = (num: Position) => {
-    if (winner !== -1 || turn === PlayerTurn.otherPlayer) {
+    if (winner !== -1 || turn === -1 || turn === PlayerTurn.otherPlayer) {
       return false;
     }
 

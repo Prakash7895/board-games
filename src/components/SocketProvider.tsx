@@ -86,7 +86,6 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     const onNewUserAdded = (users: Player[]) => {
-      console.log('new  users', users);
       dispatch(
         updatePlayers(
           users
@@ -169,12 +168,6 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       });
     }
 
-    // return () => {
-    //   console.log('ROOT CLEANING UP');
-    //   // socket?.off(EmitTypes.NEW_USER, onNewUserAdded);
-    //   socket?.disconnect(true);
-    // };
-
     return () => {
       console.log('ROOT CLEANING UP');
       window.addEventListener('unload', function () {
@@ -192,7 +185,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const createOrJoinRoom = (room: string, cb?: (res: cbArgs) => void) => {
-    console.log('Creaing room on UI', room);
+    console.log('Creating room on UI', room);
     if (room) {
       socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim(), (res: any) => {
         cb && cb(res);

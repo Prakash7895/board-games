@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 
 const OnlinePlayers = () => {
   const { players } = useSelector(playerState);
-  console.log('OnlinePlayers', players);
 
   return (
     <div className='w-full flex gap-4 overflow-x-auto h-56 justify-center'>

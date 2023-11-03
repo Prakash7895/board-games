@@ -7,7 +7,7 @@ import {
   Position,
   SelectedMarbles,
 } from '@/types';
-import { checkIfWon, getNextPossibleTikadiPositions, getRandom } from '@/utils';
+import { checkIfWon, getNextPossibleTikadiPositions } from '@/utils';
 
 interface TikadiState {
   turn: PlayerTurn | -1;
@@ -30,7 +30,7 @@ const initialState: TikadiState = {
   selectedMarble: 1,
   player1: [-1, -1, -1],
   player2: [-1, -1, -1],
-  turn: PlayerTurn.currentPlayer,
+  turn: -1,
   opponentType: OpponentType.bot,
   nextPossiblePositions: [1, 2, 3, 4, 5, 6, 7, 8, 9],
 };
@@ -146,15 +146,11 @@ export const tikadiSlice = createSlice({
         turn?: PlayerTurn | -1;
       }>
     ) => {
-      const turn = getRandom(1, 3);
+      const turn = payload.turn ? payload.turn : state.turn;
       return {
         ...initialState,
         opponentType: payload.opponentType,
-        turn: payload.turn
-          ? payload.turn
-          : turn === 1
-          ? PlayerTurn.currentPlayer
-          : PlayerTurn.otherPlayer,
+        turn: turn === 1 ? PlayerTurn.currentPlayer : PlayerTurn.otherPlayer,
       };
     },
     resetTikadiState: () => initialState,
