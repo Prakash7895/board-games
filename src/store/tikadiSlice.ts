@@ -10,7 +10,7 @@ import {
 import { checkIfWon, getNextPossibleTikadiPositions, getRandom } from '@/utils';
 
 interface TikadiState {
-  turn: PlayerTurn;
+  turn: PlayerTurn | -1;
   winner: PlayerTurn | -1;
   player1: MarblePositions;
   player2: MarblePositions;
@@ -84,34 +84,40 @@ export const tikadiSlice = createSlice({
       state: TikadiState,
       payload: PayloadAction<number>
     ) => {
-      let updatedPosition: MarblePositions = [...state[`player${state.turn}`]];
-      updatedPosition[state.selectedMarble - 1] = payload.payload as Position;
+      if (state.turn !== -1) {
+        let updatedPosition: MarblePositions = [
+          ...state[`player${state.turn}`],
+        ];
+        updatedPosition[state.selectedMarble - 1] = payload.payload as Position;
 
-      state[`player${state.turn}`] = updatedPosition;
+        state[`player${state.turn}`] = updatedPosition;
 
-      const winCheck = checkIfWon([...updatedPosition]) >= 0;
+        const winCheck = checkIfWon([...updatedPosition]) >= 0;
 
-      if (winCheck) {
-        state.winner = state.turn;
-      } else {
-        state.turn =
-          state.turn === PlayerTurn.currentPlayer
-            ? PlayerTurn.otherPlayer
-            : PlayerTurn.currentPlayer;
-
-        const idx = state[`player${state.turn}`].findIndex((el) => el < 0);
-        state.selectedMarble = (idx < 0 ? idx : idx + 1) as SelectedMarbles;
-
-        if (state.selectedMarble > 0) {
-          const nextPos = getNextPossibleTikadiPositions();
-          state.nextPossiblePositions = nextPos.filter((el) => {
-            if ([...state.player1, ...state.player2].includes(el as Position)) {
-              return false;
-            }
-            return true;
-          }) as Position[];
+        if (winCheck) {
+          state.winner = state.turn;
         } else {
-          state.nextPossiblePositions = [];
+          state.turn =
+            state.turn === PlayerTurn.currentPlayer
+              ? PlayerTurn.otherPlayer
+              : PlayerTurn.currentPlayer;
+
+          const idx = state[`player${state.turn}`].findIndex((el) => el < 0);
+          state.selectedMarble = (idx < 0 ? idx : idx + 1) as SelectedMarbles;
+
+          if (state.selectedMarble > 0) {
+            const nextPos = getNextPossibleTikadiPositions();
+            state.nextPossiblePositions = nextPos.filter((el) => {
+              if (
+                [...state.player1, ...state.player2].includes(el as Position)
+              ) {
+                return false;
+              }
+              return true;
+            }) as Position[];
+          } else {
+            state.nextPossiblePositions = [];
+          }
         }
       }
     },
@@ -120,14 +126,16 @@ export const tikadiSlice = createSlice({
       { payload }: PayloadAction<SelectedMarbles>
     ) => {
       state.selectedMarble = payload;
-      const currPos = state[`player${state.turn}`][state.selectedMarble - 1];
-      const nextPos = getNextPossibleTikadiPositions(currPos as Position);
-      state.nextPossiblePositions = nextPos.filter((el) => {
-        if ([...state.player1, ...state.player2].includes(el as Position)) {
-          return false;
-        }
-        return true;
-      }) as Position[];
+      if (state.turn !== -1) {
+        const currPos = state[`player${state.turn}`][state.selectedMarble - 1];
+        const nextPos = getNextPossibleTikadiPositions(currPos as Position);
+        state.nextPossiblePositions = nextPos.filter((el) => {
+          if ([...state.player1, ...state.player2].includes(el as Position)) {
+            return false;
+          }
+          return true;
+        }) as Position[];
+      }
     },
     initializeGame: (
       state: TikadiState,
@@ -135,13 +143,18 @@ export const tikadiSlice = createSlice({
         payload,
       }: PayloadAction<{
         opponentType: OpponentType;
+        turn?: PlayerTurn | -1;
       }>
     ) => {
       const turn = getRandom(1, 3);
       return {
         ...initialState,
         opponentType: payload.opponentType,
-        turn: turn === 1 ? PlayerTurn.currentPlayer : PlayerTurn.otherPlayer,
+        turn: payload.turn
+          ? payload.turn
+          : turn === 1
+          ? PlayerTurn.currentPlayer
+          : PlayerTurn.otherPlayer,
       };
     },
     resetTikadiState: () => initialState,

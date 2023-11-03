@@ -17,6 +17,7 @@ interface DuelState {
   otherPlayer: Player | null;
   state: GameState;
   room: string;
+  restart: boolean;
 }
 
 const initialState: DuelState = {
@@ -24,12 +25,19 @@ const initialState: DuelState = {
   otherPlayer: null,
   currentPlayer: null,
   state: GameState.waiting,
+  restart: false, // to play another round
 };
 
 export const duelSlice = createSlice({
   name: 'duel',
   initialState,
   reducers: {
+    updateRestartState: (
+      state: DuelState,
+      { payload }: PayloadAction<boolean>
+    ) => {
+      state.restart = payload;
+    },
     updateCurrentPlayer: (
       state: DuelState,
       { payload }: PayloadAction<Player>
@@ -85,6 +93,7 @@ export const {
   updateRoom,
   resetDuelState,
   updateOnlineStatus,
+  updateRestartState,
   updateCurrentPlayer,
   updateOpponentPlayer,
 } = duelSlice.actions;

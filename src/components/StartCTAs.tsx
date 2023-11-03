@@ -1,29 +1,52 @@
 'use client';
 import Input from './Input';
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { getUniqueRoomName } from '@/utils';
 import { useDispatch } from 'react-redux';
-import { initializeGame } from '@/store/tikadiSlice';
+import { initializeGame, resetTikadiState } from '@/store/tikadiSlice';
 import { OpponentType } from '@/types';
+import { resetChatState } from '@/store/chatSlice';
+import { resetDuelState } from '@/store/duelSlice';
+import { resetScoreState } from '@/store/scoreSlice';
+import { SocketContext } from './SocketProvider';
+import { toast } from 'react-toastify';
 
 const StartCTAs = () => {
   const router = useRouter();
   const [roomName, setRoomName] = useState('');
   const dispatch = useDispatch();
+  const { createOrJoinRoom } = useContext(SocketContext);
+
+  const resetRootState = () => {
+    dispatch(resetChatState());
+    dispatch(resetDuelState());
+    dispatch(resetScoreState());
+    dispatch(resetTikadiState());
+  };
 
   const createRoom = () => {
+    resetRootState();
     const newRoom = getUniqueRoomName();
     localStorage.setItem('duel-room', JSON.stringify(newRoom));
     router.push('/play');
   };
 
   const joinRoom = () => {
+    resetRootState();
     localStorage.setItem('duel-room', JSON.stringify(roomName));
-    router.push('/play');
+    createOrJoinRoom(roomName, (res) => {
+      console.log('RESPONSE:', res);
+      if (res.status) {
+        router.push('/play');
+      } else {
+        toast.error(res.message);
+      }
+    });
   };
 
   const startNewGame = () => {
+    resetRootState();
     localStorage.removeItem('duel-room');
     dispatch(initializeGame({ opponentType: OpponentType.bot }));
     router.push('/play');

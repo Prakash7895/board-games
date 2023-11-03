@@ -10,7 +10,7 @@ import {
 } from '@/types';
 import { getRandom } from '@/utils';
 
-const sockets: { uuid: string; name: string }[] = [];
+const userArr: { uuid: string; name: string; isPlaying: boolean }[] = [];
 
 const rooms: {
   [key: string]: {
@@ -34,26 +34,113 @@ export default function handler(
         console.log('NEW ONLINE', data);
         socket.data.uuid = data.uuid;
         socket.data.name = data.name;
-        const idx = sockets.findIndex((el) => el.uuid === data.uuid);
+        const idx = userArr.findIndex((el) => el.uuid === data.uuid);
         if (idx === -1) {
-          sockets.push(data);
+          userArr.push({ ...data, isPlaying: false });
         }
-        socket.emit(EmitTypes.NEW_USER, sockets);
-        socket.broadcast.emit(EmitTypes.NEW_USER, sockets);
+        socket.emit(EmitTypes.NEW_USER, userArr);
+        socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
       });
 
       socket.on(EmitTypes.EMIT_MESSAGE, (msg) => {
         socket.broadcast.emit(EmitTypes.NEW_MESSAGE, msg);
       });
 
-      socket.on(EmitTypes.CREATE_OR_JOIN_ROOM, async (room) => {
+      socket.on(EmitTypes.CREATE_OR_JOIN_ROOM, async (room, cb) => {
         console.log(socket.data.name, 'joining room', room);
         if (socket.data) {
-          await socket.join(room);
-          socket.data.room = room;
-
           const clients = io.sockets.adapter.rooms.get(room);
 
+          const idsArr = clients ? Array.from(clients) : [];
+          console.log('idsArr: ', idsArr);
+
+          if (idsArr.length >= 2) {
+            cb &&
+              cb({
+                status: false,
+                message: 'Room is already full.',
+              });
+          } else {
+            await socket.join(room);
+            socket.data.room = room;
+
+            const clientsArr = [];
+            for (let i = 0; i < idsArr.length; i++) {
+              const client = io.sockets.sockets.get(idsArr[i]);
+              clientsArr.push({
+                uuid: client?.data.uuid,
+                name: client?.data.name,
+              });
+            }
+            console.log('clientsArr:', clientsArr);
+
+            io.sockets.in(room).emit(EmitTypes.USER_JOINED_ROOM, clientsArr);
+            if (clientsArr.length === 2 && !(room in rooms)) {
+              rooms[room] = {
+                winner: '',
+                [clientsArr[0].uuid]: [-1, -1, -1],
+                [clientsArr[1].uuid]: [-1, -1, -1],
+                turn: getRandom(0, 2) ? clientsArr[0].uuid : clientsArr[1].uuid,
+              };
+              io.sockets
+                .in(room)
+                .emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
+            }
+            if (clientsArr.length === 2 && room in rooms) {
+              io.sockets
+                .in(room)
+                .emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
+            }
+
+            cb && cb({ status: true });
+
+            const idx = userArr.findIndex((u) => u.uuid === socket.data.uuid);
+            if (idx >= 0) {
+              userArr[idx] = {
+                ...userArr[idx],
+                isPlaying: true,
+              };
+            }
+            socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
+          }
+        }
+      });
+
+      socket.on(EmitTypes.PLAY_AGAIN, (room) => {
+        socket.to(room).emit(EmitTypes.PLAY_AGAIN, {
+          uuid: socket.data.uuid,
+          name: socket.data.name,
+        });
+      });
+
+      socket.on(EmitTypes.LEAVE_ROOM, (room) => {
+        socket.leave(room);
+        const clients = io.sockets.adapter.rooms.get(room);
+        const idsArr = clients ? Array.from(clients) : [];
+        console.log('LEFT ROOM idsArr', idsArr);
+
+        const idx = userArr.findIndex((u) => u.uuid === socket.data.uuid);
+        if (idx >= 0) {
+          userArr[idx] = {
+            ...userArr[idx],
+            isPlaying: false,
+          };
+        }
+        socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
+
+        socket.emit(EmitTypes.LEAVE_ROOM, {
+          uuid: socket.data.uuid,
+          name: socket.data.name,
+        });
+      });
+
+      socket.on(EmitTypes.RESET_GAME_STATE, (obj, cb) => {
+        const { room } = obj;
+        console.log('RESET_GAME_STATE');
+
+        if (room in rooms) {
+          console.log('RESET_GAME_STATE if');
+          const clients = io.sockets.adapter.rooms.get(room);
           const idsArr = clients ? Array.from(clients) : [];
 
           const clientsArr = [];
@@ -64,19 +151,21 @@ export default function handler(
               name: client?.data.name,
             });
           }
-          console.log('clientsArr:', clientsArr);
 
-          io.sockets.in(room).emit(EmitTypes.USER_JOINED_ROOM, clientsArr);
-          if (clientsArr.length === 2 && !(room in rooms)) {
+          if (clientsArr.length < 2) {
+            console.log('RESET_GAME_STATE if if');
+            cb && cb({ status: false, message: 'User left the room.' });
+          } else {
+            console.log('RESET_GAME_STATE if else');
             rooms[room] = {
               winner: '',
               [clientsArr[0].uuid]: [-1, -1, -1],
               [clientsArr[1].uuid]: [-1, -1, -1],
               turn: getRandom(0, 2) ? clientsArr[0].uuid : clientsArr[1].uuid,
             };
-            io.sockets.in(room).emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
-          }
-          if (clientsArr.length === 2 && room in rooms) {
+
+            cb && cb({ status: true });
+
             io.sockets.in(room).emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
           }
         }
@@ -108,16 +197,17 @@ export default function handler(
       socket.on('disconnect', function (reason) {
         console.log('Got disconnect!', reason);
         console.log('Got disconnect! DESC', socket.data);
-        const idx = sockets.findIndex((s) => s.uuid === socket.data.uuid);
+        const idx = userArr.findIndex((s) => s.uuid === socket.data.uuid);
         console.log('disconnect idx', idx);
         if (idx >= 0) {
-          sockets.splice(idx, 1);
+          userArr.splice(idx, 1);
         }
+        socket.leave(socket.data.room);
         socket.to(socket.data.room).emit(EmitTypes.USER_LEFT_ROOM, {
           name: socket.data.name,
           uuid: socket.data.uuid,
         });
-        socket.broadcast.emit(EmitTypes.NEW_USER, sockets);
+        socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
       });
     });
 

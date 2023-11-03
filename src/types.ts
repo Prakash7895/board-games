@@ -60,16 +60,33 @@ export type NextApiResponseServerIO = NextApiResponse & {
   };
 };
 
+export interface AlertConfirmationProps {
+  show: boolean;
+  children: ReactNode;
+  firstButtonText: string;
+  secondButtonText?: string;
+  firstButtonHandler: () => void;
+  secondButtonHandler?: () => void;
+}
+
 export enum EmitTypes {
   ONLINE = 'online',
   NEW_USER = 'new-user',
+  LEAVE_ROOM = 'leave-room',
+  PLAY_AGAIN = 'play-again',
   NEW_MESSAGE = 'new-message',
   EMIT_MESSAGE = 'emit-message',
   USER_LEFT_ROOM = 'user-left-room',
+  RESET_GAME_STATE = 'reset-game-state',
   USER_JOINED_ROOM = 'user-joined-room',
   GAME_STATE_CHANGE = 'game-state-change',
   UPDATE_GAME_STATE = 'update-game-state',
   CREATE_OR_JOIN_ROOM = 'create-or-join-room',
   NEW_MESSAGE_IN_ROOM = 'new-message-in-room',
   SEND_MESSAGE_TO_ROOM = 'send-message-to-room',
+}
+
+export interface cbArgs {
+  status: boolean;
+  message?: string;
 }

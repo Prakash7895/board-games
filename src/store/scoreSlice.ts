@@ -18,9 +18,11 @@ export const scoreSlice = createSlice({
   reducers: {
     updateScore: (
       state: ScoreState,
-      { payload }: PayloadAction<PlayerTurn>
+      { payload }: PayloadAction<PlayerTurn | -1>
     ) => {
-      state[`player${payload}`] = state[`player${payload}`] + 1;
+      if (payload !== -1) {
+        state[`player${payload}`] = state[`player${payload}`] + 1;
+      }
     },
     resetScoreState: () => initialState,
   },

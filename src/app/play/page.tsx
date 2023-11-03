@@ -5,17 +5,26 @@ import { useState, useEffect, useContext } from 'react';
 import Confetti from '@/components/Confetti';
 import ChatWindow from '@/components/ChatWindow';
 import ScoreBoard from '@/components/ScoreBoard';
-import { updateScore } from '@/store/scoreSlice';
-import { OpponentType, PlayerTurn } from '@/types';
+import { resetScoreState, updateScore } from '@/store/scoreSlice';
+import { EmitTypes, OpponentType, PlayerTurn, cbArgs } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   initializeGame,
   resetTikadiState,
   tikadiState,
 } from '@/store/tikadiSlice';
-import { duelState, updateCurrentPlayer, updateRoom } from '@/store/duelSlice';
+import {
+  duelState,
+  resetDuelState,
+  updateCurrentPlayer,
+  updateRestartState,
+  updateRoom,
+} from '@/store/duelSlice';
 import { SocketContext } from '@/components/SocketProvider';
 import { userState } from '@/store/userSlice';
+import AlertConfirmation from '@/components/AlertConfirmation';
+import { resetChatState } from '@/store/chatSlice';
+import { toast } from 'react-toastify';
 
 export default function PlayGround() {
   const router = useRouter();
@@ -23,7 +32,7 @@ export default function PlayGround() {
   const { name, uuid } = useSelector(userState);
   const { turn, opponentType, winner } = useSelector(tikadiState);
   const [showPlayAgainBtn, setShowPlayAgainBtn] = useState(false);
-  const { room } = useSelector(duelState);
+  const { room, restart, otherPlayer } = useSelector(duelState);
   const { createOrJoinRoom, socket } = useContext(SocketContext);
 
   useEffect(() => {
@@ -50,7 +59,9 @@ export default function PlayGround() {
         ? 'Computer Won'
         : 'Opponent Won';
     }
-    return turn === PlayerTurn.currentPlayer
+    return turn === -1
+      ? ''
+      : turn === PlayerTurn.currentPlayer
       ? 'Your Turn'
       : opponentType === OpponentType.bot
       ? 'Computer Turn'
@@ -92,8 +103,37 @@ export default function PlayGround() {
     };
   }, [room, socket, name, uuid]);
 
+  const goHomeHandler = () => {
+    if (opponentType === OpponentType.player) {
+      socket?.emit(EmitTypes.LEAVE_ROOM, room);
+    }
+    localStorage.removeItem('duel-room');
+    dispatch(updateRestartState(false));
+    dispatch(resetTikadiState());
+    dispatch(resetScoreState());
+    dispatch(resetChatState());
+    dispatch(resetDuelState());
+    router.push('/');
+  };
+
   return (
     <div className='min-h-screen p-5'>
+      <AlertConfirmation
+        show={restart}
+        firstButtonText='Play'
+        secondButtonText='Go Home'
+        firstButtonHandler={() => {
+          socket?.emit(EmitTypes.RESET_GAME_STATE, { room }, (res: cbArgs) => {
+            if (res.message) {
+              toast.info(res.message);
+            }
+            dispatch(updateRestartState(false));
+          });
+        }}
+        secondButtonHandler={goHomeHandler}
+      >
+        <p>{otherPlayer?.name} wants a rematch.</p>
+      </AlertConfirmation>
       <div className='flex flex-col justify-center mb-5'>
         <p className='text-center text-xl mb-2'>{getLabel()}</p>
         <div className='text-center h-12'>
@@ -101,14 +141,23 @@ export default function PlayGround() {
             <>
               <button
                 className='btn btn-success btn-outline mx-5'
-                onClick={() => dispatch(resetTikadiState())}
+                onClick={() => {
+                  if (opponentType !== OpponentType.bot) {
+                    dispatch(
+                      initializeGame({
+                        opponentType: OpponentType.player,
+                        turn: -1,
+                      })
+                    );
+                    socket?.emit(EmitTypes.PLAY_AGAIN, room);
+                  } else {
+                    dispatch(resetTikadiState());
+                  }
+                }}
               >
                 Play Again
               </button>
-              <button
-                className='btn btn-info mx-5'
-                onClick={() => router.push('/')}
-              >
+              <button className='btn btn-info mx-5' onClick={goHomeHandler}>
                 Go Home
               </button>
             </>

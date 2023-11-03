@@ -5,15 +5,18 @@ import { io } from 'socket.io-client';
 import React, { useEffect, ReactNode, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUser, userState } from '@/store/userSlice';
-import { EmitTypes, PlayerTurn } from '@/types';
+import { EmitTypes, PlayerTurn, cbArgs } from '@/types';
 import { Player, updatePlayers } from '@/store/playerSlice';
 import { appendMessage } from '@/store/chatSlice';
 import {
   duelState,
   updateOnlineStatus,
   updateOpponentPlayer,
+  updateRestartState,
 } from '@/store/duelSlice';
 import { updateGameState } from '@/store/tikadiSlice';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -22,7 +25,7 @@ interface DefaultEventsMap {
 export const SocketContext = React.createContext<{
   socket: Socket<DefaultEventsMap, DefaultEventsMap> | null;
   emitMessage: (message: string) => void;
-  createOrJoinRoom: (message: string) => void;
+  createOrJoinRoom: (message: string, cb?: (res: cbArgs) => void) => void;
   sendMessageToRoom: (message: string, room: string) => void;
 }>({
   socket: null,
@@ -88,7 +91,10 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         updatePlayers(
           users
             .filter((p) => p.uuid !== uuid)
-            .map((p) => ({ ...p, isPlaying: false }))
+            .map((p) => ({
+              ...p,
+              isPlaying: p.isPlaying ? p.isPlaying : false,
+            }))
         )
       );
     };
@@ -119,7 +125,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       socket?.on(EmitTypes.USER_LEFT_ROOM, (player) => {
         console.log('USER_LEFT_ROOM', player);
-        if (player.uuid !== uuid) {
+        if (player && player.uuid !== uuid) {
           dispatch(
             updateOnlineStatus({
               uuid: player.uuid,
@@ -155,6 +161,12 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
           );
         }
       });
+
+      socket.on(EmitTypes.PLAY_AGAIN, (player: Player) => {
+        if (player && player.uuid !== uuid) {
+          dispatch(updateRestartState(true));
+        }
+      });
     }
 
     // return () => {
@@ -179,10 +191,12 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     });
   };
 
-  const createOrJoinRoom = (room: string) => {
+  const createOrJoinRoom = (room: string, cb?: (res: cbArgs) => void) => {
     console.log('Creaing room on UI', room);
     if (room) {
-      socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim());
+      socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim(), (res: any) => {
+        cb && cb(res);
+      });
     }
   };
 
@@ -203,6 +217,19 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     <SocketContext.Provider
       value={{ socket, emitMessage, createOrJoinRoom, sendMessageToRoom }}
     >
+      <ToastContainer
+        position='top-center'
+        autoClose={2500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme='dark'
+      />
+
       {children}
     </SocketContext.Provider>
   );
