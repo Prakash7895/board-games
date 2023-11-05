@@ -24,11 +24,23 @@ export const scoreSlice = createSlice({
         state[`player${payload}`] = state[`player${payload}`] + 1;
       }
     },
+    updatePlayersScores: (
+      state: ScoreState,
+      { payload }: PayloadAction<Partial<ScoreState>>
+    ) => {
+      if (payload.player1) {
+        state.player1 = payload.player1;
+      }
+      if (payload.player2) {
+        state.player2 = payload.player2;
+      }
+    },
     resetScoreState: () => initialState,
   },
 });
 
-export const { updateScore, resetScoreState } = scoreSlice.actions;
+export const { updateScore, resetScoreState, updatePlayersScores } =
+  scoreSlice.actions;
 
 export const scoreState = (state: RootState) => state.scoreSlice;
 

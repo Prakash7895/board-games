@@ -8,13 +8,17 @@ import {
   NextApiResponseServerIO,
   Position,
 } from '@/types';
-import { getRandom } from '@/utils';
+import { checkIfWon, getRandom } from '@/utils';
 
 const userArr: { uuid: string; name: string; isPlaying: boolean }[] = [];
 
+interface IWinner {
+  [key: string]: number;
+}
+
 const rooms: {
   [key: string]: {
-    [k: string]: MarblePositions | string;
+    [k: string]: MarblePositions | string | IWinner;
   };
 } = {};
 
@@ -42,6 +46,22 @@ export default function handler(
         socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
       });
 
+      const getRoomUser = (room: string) => {
+        const clients = io.sockets.adapter.rooms.get(room);
+        const idsArr = clients ? Array.from(clients) : [];
+
+        const clientsArr = [];
+        for (let i = 0; i < idsArr.length; i++) {
+          const client = io.sockets.sockets.get(idsArr[i]);
+          clientsArr.push({
+            uuid: client?.data.uuid,
+            name: client?.data.name,
+          });
+        }
+
+        return clientsArr;
+      };
+
       socket.on(EmitTypes.EMIT_MESSAGE, (msg) => {
         socket.broadcast.emit(EmitTypes.NEW_MESSAGE, msg);
       });
@@ -64,26 +84,23 @@ export default function handler(
             await socket.join(room);
             socket.data.room = room;
 
-            const clients = io.sockets.adapter.rooms.get(room);
-            const idsArr = clients ? Array.from(clients) : [];
-
-            const clientsArr = [];
-            for (let i = 0; i < idsArr.length; i++) {
-              const client = io.sockets.sockets.get(idsArr[i]);
-              clientsArr.push({
-                uuid: client?.data.uuid,
-                name: client?.data.name,
-              });
-            }
+            const clientsArr = getRoomUser(room);
             console.log('clientsArr:', clientsArr);
 
             io.sockets.in(room).emit(EmitTypes.USER_JOINED_ROOM, clientsArr);
-            if (clientsArr.length === 2 && !(room in rooms)) {
+            if (
+              clientsArr.length === 2 &&
+              (!(room in rooms) || (room in rooms && rooms[room].winner))
+            ) {
               rooms[room] = {
                 winner: '',
                 [clientsArr[0].uuid]: [-1, -1, -1],
                 [clientsArr[1].uuid]: [-1, -1, -1],
                 turn: getRandom(0, 2) ? clientsArr[0].uuid : clientsArr[1].uuid,
+                scores: {
+                  [clientsArr[0].uuid]: 0,
+                  [clientsArr[1].uuid]: 0,
+                },
               };
               io.sockets
                 .in(room)
@@ -116,10 +133,10 @@ export default function handler(
         });
       });
 
-      socket.on(EmitTypes.LEAVE_ROOM, (room) => {
-        socket.leave(room);
-        // const clients = io.sockets.adapter.rooms.get(room);
-        // const idsArr = clients ? Array.from(clients) : [];
+      socket.on(EmitTypes.LEAVE_ROOM, async (room) => {
+        const clientsArr = getRoomUser(room);
+
+        await socket.leave(room);
         console.log('LEFT ROOM DATA', socket.data);
 
         const idx = userArr.findIndex((u) => u.uuid === socket.data.uuid);
@@ -130,6 +147,35 @@ export default function handler(
             isPlaying: false,
           };
         }
+
+        let winner = '';
+        for (let i = 0; i < clientsArr.length; i++) {
+          if (clientsArr[i].uuid) {
+            const uuid = clientsArr[i].uuid;
+            const win = checkIfWon([...(rooms[room][uuid] as MarblePositions)]);
+            if (win >= 0) {
+              winner = uuid;
+            }
+          }
+        }
+
+        const scores = { ...(rooms[room].scores as IWinner) };
+
+        if (winner) {
+          rooms[room] = {
+            ...rooms[room],
+            [clientsArr[0].uuid]: [-1, -1, -1],
+            [clientsArr[1].uuid]: [-1, -1, -1],
+            winner,
+            scores: {
+              ...scores,
+              [winner]: scores[winner] + 1,
+            },
+          };
+
+          io.sockets.in(room).emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
+        }
+
         socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
 
         socket.to(room).emit(EmitTypes.USER_LEFT_ROOM, {
@@ -144,17 +190,7 @@ export default function handler(
 
         if (room in rooms) {
           console.log('RESET_GAME_STATE if');
-          const clients = io.sockets.adapter.rooms.get(room);
-          const idsArr = clients ? Array.from(clients) : [];
-
-          const clientsArr = [];
-          for (let i = 0; i < idsArr.length; i++) {
-            const client = io.sockets.sockets.get(idsArr[i]);
-            clientsArr.push({
-              uuid: client?.data.uuid,
-              name: client?.data.name,
-            });
-          }
+          const clientsArr = getRoomUser(room);
 
           if (clientsArr.length < 2) {
             console.log('RESET_GAME_STATE if if');
@@ -166,6 +202,10 @@ export default function handler(
               [clientsArr[0].uuid]: [-1, -1, -1],
               [clientsArr[1].uuid]: [-1, -1, -1],
               turn: getRandom(0, 2) ? clientsArr[0].uuid : clientsArr[1].uuid,
+              scores: {
+                [clientsArr[0].uuid]: 0,
+                [clientsArr[1].uuid]: 0,
+              },
             };
 
             cb && cb({ status: true });
@@ -182,11 +222,32 @@ export default function handler(
         const updatedPos = [...(rooms[room][playerUUID] as MarblePositions)];
         updatedPos[marbleNum - 1] = newPos as Position;
 
+        const clientsArr = getRoomUser(room);
+        let winner = '';
+        for (let i = 0; i < clientsArr.length; i++) {
+          if (clientsArr[i].uuid) {
+            const uuid = clientsArr[i].uuid;
+            const win = checkIfWon([...(rooms[room][uuid] as MarblePositions)]);
+            if (win >= 0) {
+              winner = uuid;
+            }
+          }
+        }
+
+        const scores = { ...(rooms[room].scores as IWinner) };
+        if (winner) {
+          scores[winner] = scores[winner] + 1;
+        }
+
         rooms[room] = {
           ...rooms[room],
           [playerUUID]: [...updatedPos],
           turn: turn,
+          winner,
+          scores,
         };
+
+        console.log('UPDATED ROOM STATE:', rooms[room]);
 
         io.sockets.in(room).emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
       });

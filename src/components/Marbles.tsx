@@ -4,6 +4,7 @@ import { tikadiState } from '@/store/tikadiSlice';
 import { useSelector } from 'react-redux';
 import { duelState } from '@/store/duelSlice';
 import { OpponentType } from '@/types';
+import { scoreState } from '@/store/scoreSlice';
 
 export const coinOne = (
   <img src={'./coin-one.svg'} className={`w-10 h-10 cursor-pointer`} />
@@ -19,6 +20,8 @@ const Marbles = () => {
   const marbles2 = [1, 2, 3];
 
   const { currentPlayer, otherPlayer } = useSelector(duelState);
+  const { player1: player1Score, player2: player2Score } =
+    useSelector(scoreState);
 
   return (
     <div className='min-w-[20rem] border border-gray-600 rounded-lg flex flex-col'>
@@ -38,7 +41,9 @@ const Marbles = () => {
                 <div key={m}>{player1[m - 1] === -1 && coinOne}</div>
               ))}
             </div>
-            <p className='text-center text-xl'>{currentPlayer?.name}</p>
+            <p className='text-center text-xl'>{`${currentPlayer?.name} ${
+              opponentType === OpponentType.player ? ' - ' + player1Score : ''
+            }`}</p>
           </div>
           <div className='divider before:bg-slate-500 after:bg-slate-500'>
             vs
@@ -47,7 +52,7 @@ const Marbles = () => {
             <p className='text-center text-xl'>
               {opponentType === OpponentType.bot
                 ? 'Computer'
-                : otherPlayer?.name}
+                : `${otherPlayer?.name} - ${player2Score}`}
             </p>
             <div className='flex gap-5 justify-center h-12'>
               {marbles2.map((m) => (

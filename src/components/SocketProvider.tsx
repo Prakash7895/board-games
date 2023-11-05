@@ -17,6 +17,7 @@ import {
 import { updateGameState } from '@/store/tikadiSlice';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { updatePlayersScores } from '@/store/scoreSlice';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -156,6 +157,12 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
                 state.turn === uuid
                   ? PlayerTurn.currentPlayer
                   : PlayerTurn.otherPlayer,
+            })
+          );
+          dispatch(
+            updatePlayersScores({
+              player1: state.scores[uuid],
+              player2: state.scores[otherPlayer.uuid],
             })
           );
         }
