@@ -34,6 +34,7 @@ export default function PlayGround() {
   const [showPlayAgainBtn, setShowPlayAgainBtn] = useState(false);
   const { room, restart, otherPlayer } = useSelector(duelState);
   const { createOrJoinRoom, socket } = useContext(SocketContext);
+  const [gameInitialized, setGameInitialized] = useState(false);
 
   useEffect(() => {
     let interVal: NodeJS.Timeout;
@@ -81,6 +82,7 @@ export default function PlayGround() {
           ...(otherPlayer ? {} : { turn: -1 }),
         })
       );
+      setGameInitialized(true);
     }
   }, [room, otherPlayer]);
 
@@ -126,6 +128,12 @@ export default function PlayGround() {
         firstButtonText='Play'
         secondButtonText='Go Home'
         firstButtonHandler={() => {
+          dispatch(
+            initializeGame({
+              opponentType: OpponentType.player,
+              turn: -1,
+            })
+          );
           socket?.emit(EmitTypes.RESET_GAME_STATE, { room }, (res: cbArgs) => {
             if (res.message) {
               toast.info(res.message);
@@ -182,8 +190,16 @@ export default function PlayGround() {
       </div>
       <div className='flex justify-around h-full w-full'>
         {winner === PlayerTurn.currentPlayer && <Confetti />}
-        <Ground />
-        {opponentType === OpponentType.bot ? <ScoreBoard /> : <ChatWindow />}
+        {gameInitialized && (
+          <>
+            <Ground />
+            {opponentType === OpponentType.bot ? (
+              <ScoreBoard />
+            ) : (
+              <ChatWindow />
+            )}
+          </>
+        )}
       </div>
     </div>
   );

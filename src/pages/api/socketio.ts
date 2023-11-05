@@ -118,11 +118,12 @@ export default function handler(
 
       socket.on(EmitTypes.LEAVE_ROOM, (room) => {
         socket.leave(room);
-        const clients = io.sockets.adapter.rooms.get(room);
-        const idsArr = clients ? Array.from(clients) : [];
-        console.log('LEFT ROOM idsArr', idsArr);
+        // const clients = io.sockets.adapter.rooms.get(room);
+        // const idsArr = clients ? Array.from(clients) : [];
+        console.log('LEFT ROOM DATA', socket.data);
 
         const idx = userArr.findIndex((u) => u.uuid === socket.data.uuid);
+        console.log('LEAVE_ROOM', idx);
         if (idx >= 0) {
           userArr[idx] = {
             ...userArr[idx],
@@ -131,7 +132,7 @@ export default function handler(
         }
         socket.broadcast.emit(EmitTypes.NEW_USER, userArr);
 
-        socket.emit(EmitTypes.LEAVE_ROOM, {
+        socket.to(room).emit(EmitTypes.USER_LEFT_ROOM, {
           uuid: socket.data.uuid,
           name: socket.data.name,
         });

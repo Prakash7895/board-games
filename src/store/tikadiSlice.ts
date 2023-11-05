@@ -150,7 +150,12 @@ export const tikadiSlice = createSlice({
       return {
         ...initialState,
         opponentType: payload.opponentType,
-        turn: turn === 1 ? PlayerTurn.currentPlayer : PlayerTurn.otherPlayer,
+        turn:
+          turn === -1
+            ? turn
+            : turn === 1
+            ? PlayerTurn.currentPlayer
+            : PlayerTurn.otherPlayer,
       };
     },
     resetTikadiState: () => initialState,
