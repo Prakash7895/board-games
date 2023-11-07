@@ -10,14 +10,16 @@ import { Player, updatePlayers } from '@/store/playerSlice';
 import { appendMessage } from '@/store/chatSlice';
 import {
   duelState,
+  updateInvitation,
   updateOnlineStatus,
   updateOpponentPlayer,
   updateRestartState,
 } from '@/store/duelSlice';
 import { updateGameState } from '@/store/tikadiSlice';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { updatePlayersScores } from '@/store/scoreSlice';
+import { useRouter } from 'next/navigation';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -43,6 +45,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const { uuid, name } = useSelector(userState);
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const { otherPlayer } = useSelector(duelState);
 
@@ -171,6 +174,28 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       socket.on(EmitTypes.PLAY_AGAIN, (player: Player) => {
         if (player && player.uuid !== uuid) {
           dispatch(updateRestartState(true));
+        }
+      });
+
+      socket.on(EmitTypes.REQUEST_TO_PLAY, (obj) => {
+        if (obj && obj.from && obj.to === uuid) {
+          dispatch(updateInvitation({ from: { ...obj.from, isOnline: true } }));
+        }
+      });
+
+      socket.on(EmitTypes.CANCEL_INVITATION, (obj) => {
+        if (obj && obj.from && obj.to === uuid) {
+          dispatch(updateInvitation(null));
+          toast.info(`${obj.from.name} has cancelled the invitation.`);
+        }
+      });
+
+      socket.on(EmitTypes.ACCEPT_INVITATION, (obj) => {
+        if (obj && obj.room && obj.from && obj.to === uuid) {
+          dispatch(updateInvitation(null));
+          localStorage.setItem('duel-room', JSON.stringify(obj.room));
+          createOrJoinRoom(obj.room);
+          router.push('/play');
         }
       });
     }

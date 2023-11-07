@@ -6,9 +6,9 @@ import Button from './Button';
 const AlertConfirmation: React.FC<AlertConfirmationProps> = ({
   show,
   children,
-  firstButtonText = 'Ok',
+  firstButtonText,
   secondButtonText,
-  firstButtonHandler,
+  firstButtonHandler = () => {},
   secondButtonHandler = () => {},
 }) => {
   return show ? (
@@ -16,7 +16,9 @@ const AlertConfirmation: React.FC<AlertConfirmationProps> = ({
       <div className='flex flex-col gap-4 py-2'>
         {children}
         <div className='flex justify-end gap-5'>
-          <Button label={firstButtonText} onClick={firstButtonHandler} />
+          {firstButtonText && (
+            <Button label={firstButtonText} onClick={firstButtonHandler} />
+          )}
           {secondButtonText && (
             <Button
               label={secondButtonText}

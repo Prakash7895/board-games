@@ -18,6 +18,9 @@ interface DuelState {
   state: GameState;
   room: string;
   restart: boolean;
+  invitation: {
+    from: Player;
+  } | null;
 }
 
 const initialState: DuelState = {
@@ -26,6 +29,7 @@ const initialState: DuelState = {
   currentPlayer: null,
   state: GameState.waiting,
   restart: false, // to play another round
+  invitation: null,
 };
 
 export const duelSlice = createSlice({
@@ -83,6 +87,12 @@ export const duelSlice = createSlice({
         };
       }
     },
+    updateInvitation: (
+      state: DuelState,
+      { payload }: PayloadAction<{ from: Player } | null>
+    ) => {
+      state.invitation = payload;
+    },
     resetDuelState: () => initialState,
   },
 });
@@ -91,6 +101,7 @@ export const {
   startDuel,
   updateRoom,
   resetDuelState,
+  updateInvitation,
   updateOnlineStatus,
   updateRestartState,
   updateCurrentPlayer,

@@ -111,7 +111,7 @@ const Tikadi = () => {
     if (turn === PlayerTurn.otherPlayer && opponentType === OpponentType.bot) {
       const [pos, marble] = getNextMove([...player2], [...player1]);
 
-      setTimeout(() => {
+      interVal = setTimeout(() => {
         if (marble >= 0) {
           dispatch(selectMarble(marble as SelectedMarbles));
         }

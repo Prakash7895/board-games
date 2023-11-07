@@ -252,6 +252,26 @@ export default function handler(
         io.sockets.in(room).emit(EmitTypes.GAME_STATE_CHANGE, rooms[room]);
       });
 
+      socket.on(EmitTypes.REQUEST_TO_PLAY, (obj) => {
+        const { to, uuid, name } = obj;
+
+        socket.broadcast.emit(EmitTypes.REQUEST_TO_PLAY, {
+          from: {
+            uuid: uuid,
+            name: name,
+          },
+          to: to,
+        });
+      });
+
+      socket.on(EmitTypes.CANCEL_INVITATION, (obj) => {
+        socket.broadcast.emit(EmitTypes.CANCEL_INVITATION, obj);
+      });
+
+      socket.on(EmitTypes.ACCEPT_INVITATION, (obj) => {
+        socket.broadcast.emit(EmitTypes.ACCEPT_INVITATION, obj);
+      });
+
       socket.on(EmitTypes.SEND_MESSAGE_TO_ROOM, (roomMsgObj) => {
         socket.to(roomMsgObj.room).emit(EmitTypes.NEW_MESSAGE_IN_ROOM, {
           message: roomMsgObj.message,

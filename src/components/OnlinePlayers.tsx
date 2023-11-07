@@ -1,11 +1,28 @@
 'use client';
 import { playerState } from '@/store/playerSlice';
 import Image from 'next/image';
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { useSelector } from 'react-redux';
+import AlertConfirmation from './AlertConfirmation';
+import { SocketContext } from './SocketProvider';
+import { EmitTypes } from '@/types';
+import { userState } from '@/store/userSlice';
 
 const OnlinePlayers = () => {
   const { players } = useSelector(playerState);
+  const { name, uuid } = useSelector(userState);
+  const [show, setShow] = useState(false);
+
+  const { socket } = useContext(SocketContext);
+
+  const inviteHandler = (playerUUID: string) => {
+    socket?.emit(EmitTypes.REQUEST_TO_PLAY, {
+      to: playerUUID,
+      uuid,
+      name,
+    });
+    setShow(true);
+  };
 
   return (
     <div className='w-full flex gap-4 overflow-x-auto h-56 justify-center'>
@@ -30,6 +47,7 @@ const OnlinePlayers = () => {
               className={`btn btn-outline btn-accent min-h-6 h-6 ${
                 player.isPlaying ? 'btn-disabled !text-gray-400' : ''
               } `}
+              onClick={() => inviteHandler(player.uuid)}
             >
               Invite
             </button>
@@ -40,6 +58,14 @@ const OnlinePlayers = () => {
           Searching for players online...
         </p>
       )}
+      <AlertConfirmation
+        show={show}
+        secondButtonText='Cancel'
+        secondButtonHandler={() => setShow(false)}
+      >
+        <p className='text-xl'>Requested</p>
+        <p>Waiting for other player to accept...</p>
+      </AlertConfirmation>
     </div>
   );
 };

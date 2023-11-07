@@ -63,9 +63,9 @@ export type NextApiResponseServerIO = NextApiResponse & {
 export interface AlertConfirmationProps {
   show: boolean;
   children: ReactNode;
-  firstButtonText: string;
+  firstButtonText?: string;
   secondButtonText?: string;
-  firstButtonHandler: () => void;
+  firstButtonHandler?: () => void;
   secondButtonHandler?: () => void;
 }
 
@@ -77,8 +77,11 @@ export enum EmitTypes {
   NEW_MESSAGE = 'new-message',
   EMIT_MESSAGE = 'emit-message',
   USER_LEFT_ROOM = 'user-left-room',
+  REQUEST_TO_PLAY = 'request-to-play',
   RESET_GAME_STATE = 'reset-game-state',
   USER_JOINED_ROOM = 'user-joined-room',
+  ACCEPT_INVITATION = 'accept-invitation',
+  CANCEL_INVITATION = 'cancel-invitation',
   GAME_STATE_CHANGE = 'game-state-change',
   UPDATE_GAME_STATE = 'update-game-state',
   CREATE_OR_JOIN_ROOM = 'create-or-join-room',

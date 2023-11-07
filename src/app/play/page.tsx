@@ -25,6 +25,7 @@ import { userState } from '@/store/userSlice';
 import AlertConfirmation from '@/components/AlertConfirmation';
 import { resetChatState } from '@/store/chatSlice';
 import { toast } from 'react-toastify';
+import { getRandom } from '@/utils';
 
 export default function PlayGround() {
   const router = useRouter();
@@ -82,6 +83,9 @@ export default function PlayGround() {
           ...(otherPlayer ? {} : { turn: -1 }),
         })
       );
+      setGameInitialized(true);
+    }
+    if (!savedRoom) {
       setGameInitialized(true);
     }
   }, [room, otherPlayer]);
@@ -163,6 +167,12 @@ export default function PlayGround() {
                     socket?.emit(EmitTypes.PLAY_AGAIN, room);
                   } else {
                     dispatch(resetTikadiState());
+                    dispatch(
+                      initializeGame({
+                        opponentType: OpponentType.bot,
+                        turn: 1 + getRandom(0, 2),
+                      })
+                    );
                   }
                 }}
               >

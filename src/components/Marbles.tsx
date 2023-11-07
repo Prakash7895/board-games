@@ -1,10 +1,17 @@
 'use client';
-import React from 'react';
-import { tikadiState } from '@/store/tikadiSlice';
-import { useSelector } from 'react-redux';
-import { duelState } from '@/store/duelSlice';
-import { OpponentType } from '@/types';
-import { scoreState } from '@/store/scoreSlice';
+import React, { useContext } from 'react';
+import { resetTikadiState, tikadiState } from '@/store/tikadiSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  duelState,
+  resetDuelState,
+  updateRestartState,
+} from '@/store/duelSlice';
+import { EmitTypes, OpponentType } from '@/types';
+import { resetScoreState, scoreState } from '@/store/scoreSlice';
+import { SocketContext } from './SocketProvider';
+import { resetChatState } from '@/store/chatSlice';
+import { useRouter } from 'next/navigation';
 
 export const coinOne = (
   <img src={'./coin-one.svg'} className={`w-10 h-10 cursor-pointer`} />
@@ -15,13 +22,31 @@ export const coinTwo = (
 );
 
 const Marbles = () => {
+  const router = useRouter();
   const { player1, player2, opponentType } = useSelector(tikadiState);
   const marbles1 = [1, 2, 3];
   const marbles2 = [1, 2, 3];
 
-  const { currentPlayer, otherPlayer } = useSelector(duelState);
+  const { currentPlayer, otherPlayer, room } = useSelector(duelState);
   const { player1: player1Score, player2: player2Score } =
     useSelector(scoreState);
+
+  const dispatch = useDispatch();
+
+  const { socket } = useContext(SocketContext);
+
+  const goHomeHandler = () => {
+    if (opponentType === OpponentType.player) {
+      socket?.emit(EmitTypes.LEAVE_ROOM, room);
+    }
+    localStorage.removeItem('duel-room');
+    dispatch(updateRestartState(false));
+    dispatch(resetTikadiState());
+    dispatch(resetScoreState());
+    dispatch(resetChatState());
+    dispatch(resetDuelState());
+    router.push('/');
+  };
 
   return (
     <div className='min-w-[20rem] border border-gray-600 rounded-lg flex flex-col'>
@@ -30,8 +55,11 @@ const Marbles = () => {
           <p>Waiting for the Opponent...</p>
         </div>
       ) : opponentType !== OpponentType.bot && !otherPlayer?.isOnline ? (
-        <div className='h-full flex justify-center items-center'>
+        <div className='h-full flex flex-col gap-5 justify-center items-center'>
           <p>{otherPlayer?.name} left the Game. Retrying...</p>
+          <button className='btn btn-info mx-5' onClick={goHomeHandler}>
+            Go Home
+          </button>
         </div>
       ) : (
         <>
