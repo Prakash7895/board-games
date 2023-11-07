@@ -13,6 +13,11 @@ export const metadata: Metadata = {
     "Experience Three Men's Morris like never before! Play with intelligent bots or challenge online players, engage in real-time chat during matches, invite friends for friendly competitions, and easily discover who's online for instant gaming action. Try our ultimate Morris game now!",
 };
 
+//@ts-ignore
+global.performance = global.performance || {
+  now: () => new Date().getTime(),
+};
+
 export default function RootLayout({
   children,
 }: {
