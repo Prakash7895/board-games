@@ -159,7 +159,7 @@ export default function handler(
           }
         }
 
-        const scores = { ...(rooms[room].scores as IWinner) };
+        const scores = { ...((rooms[room]?.scores ?? {}) as IWinner) };
 
         if (winner) {
           rooms[room] = {

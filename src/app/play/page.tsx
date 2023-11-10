@@ -87,6 +87,12 @@ export default function PlayGround() {
     }
     if (!savedRoom) {
       setGameInitialized(true);
+      dispatch(
+        initializeGame({
+          opponentType: OpponentType.bot,
+          turn: 1 + getRandom(0, 2),
+        })
+      );
     }
   }, [room, otherPlayer]);
 
@@ -124,6 +130,17 @@ export default function PlayGround() {
     dispatch(resetDuelState());
     router.push('/');
   };
+
+  useEffect(() => {
+    const value = localStorage.getItem('duel-room');
+    const savedRoom = value ? JSON.parse(value) : null;
+
+    return () => {
+      if (savedRoom) {
+        socket?.emit(EmitTypes.LEAVE_ROOM, savedRoom);
+      }
+    };
+  }, [socket]);
 
   return (
     <div className='min-h-screen p-5'>

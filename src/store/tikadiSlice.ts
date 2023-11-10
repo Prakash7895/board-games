@@ -55,6 +55,16 @@ export const tikadiSlice = createSlice({
       const idx = payload.player1.findIndex((el) => el < 0);
       state.selectedMarble = (idx < 0 ? idx : idx + 1) as SelectedMarbles;
 
+      if (state.selectedMarble > 0) {
+        const nextPos = getNextPossibleTikadiPositions();
+        state.nextPossiblePositions = nextPos.filter((el) => {
+          if ([...state.player1, ...state.player2].includes(el as Position)) {
+            return false;
+          }
+          return true;
+        }) as Position[];
+      }
+
       const winCheckPlayer1 = checkIfWon([...state.player1]) >= 0;
       console.log('WIN Check Player 1', winCheckPlayer1);
 

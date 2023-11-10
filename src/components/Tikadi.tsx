@@ -46,7 +46,7 @@ const Tikadi = () => {
       }
     } else {
       const idx = [...player1, ...player2].findIndex((el) => el === pos);
-      if (idx < 0) {
+      if (idx < 0 && nextPossiblePositions.includes(pos)) {
         dispatch(moveToSelectedPosition(pos));
         if (
           opponentType !== OpponentType.bot &&

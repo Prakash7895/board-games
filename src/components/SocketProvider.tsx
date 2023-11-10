@@ -102,6 +102,16 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
     };
 
+    const newMsgHandler = (msgObj: any) => {
+      console.log('NEW_MESSAGE_IN_ROOM', msgObj);
+      dispatch(
+        appendMessage({
+          isIncoming: true,
+          message: msgObj.message,
+        })
+      );
+    };
+
     if (socket && uuid && name) {
       socket.emit(EmitTypes.ONLINE, {
         uuid: uuid,
@@ -138,15 +148,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         }
       });
 
-      socket.on(EmitTypes.NEW_MESSAGE_IN_ROOM, (msgObj) => {
-        console.log('NEW_MESSAGE_IN_ROOM', msgObj);
-        dispatch(
-          appendMessage({
-            isIncoming: true,
-            message: msgObj.message,
-          })
-        );
-      });
+      socket.on(EmitTypes.NEW_MESSAGE_IN_ROOM, newMsgHandler);
 
       socket.on(EmitTypes.GAME_STATE_CHANGE, (state) => {
         console.log('GAME_STATE_CHANGE', state);
@@ -202,6 +204,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     return () => {
       console.log('ROOT CLEANING UP');
+      socket?.off(EmitTypes.NEW_MESSAGE_IN_ROOM, newMsgHandler);
       window.addEventListener('unload', function () {
         socket?.disconnect(true);
         console.log('UNLOADED');
