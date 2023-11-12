@@ -25,7 +25,7 @@ export default function Home() {
 
   const cancelInvite = () => {
     socket?.emit(EmitTypes.CANCEL_INVITATION, {
-      to: invitation?.from.uuid,
+      to: invitation?.from?.uuid,
       from: { uuid, name },
     });
     dispatch(updateInvitation(null));
@@ -44,7 +44,7 @@ export default function Home() {
     localStorage.setItem('duel-room', JSON.stringify(newRoom));
     socket?.emit(EmitTypes.ACCEPT_INVITATION, {
       room: newRoom,
-      to: invitation?.from.uuid,
+      to: invitation?.from?.uuid,
       from: { uuid, name },
     });
     socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, newRoom);
@@ -58,14 +58,14 @@ export default function Home() {
       <StartCTAs />
       <OnlinePlayers />
       <AlertConfirmation
-        show={!!invitation}
+        show={!!invitation?.from}
         firstButtonText='Accept'
         secondButtonText='Cancel'
         firstButtonHandler={acceptInvite}
         secondButtonHandler={cancelInvite}
       >
         <p className='text-xl'>Invitation</p>
-        <p>{invitation?.from.name} has invited you to play.</p>
+        <p>{invitation?.from?.name} has invited you to play.</p>
       </AlertConfirmation>
     </main>
   );

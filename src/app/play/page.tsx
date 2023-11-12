@@ -97,6 +97,12 @@ export default function PlayGround() {
   }, [room, otherPlayer]);
 
   useEffect(() => {
+    if (room && otherPlayer) {
+      setGameInitialized(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (name || uuid) {
       dispatch(
         updateCurrentPlayer({

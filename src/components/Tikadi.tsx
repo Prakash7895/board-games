@@ -35,14 +35,28 @@ const Tikadi = () => {
   const dispatch = useDispatch();
   const { socket } = useContext(SocketContext);
 
+  const findNextPosition = (num: Position) => {
+    const nextPossiblePos = getNextPossibleTikadiPositions(num);
+    return nextPossiblePos.filter((el) => {
+      if ([...player1, ...player2].includes(el as Position)) {
+        return false;
+      }
+      return true;
+    });
+  };
+
   const moveMarbleToThisPosition = (pos: Position) => {
     if (selectedMarble === -1) {
       let marble = -1;
       if (player1.includes(pos)) {
         marble = player1.findIndex((el) => el === pos);
       }
+
       if (marble >= 0) {
-        dispatch(selectMarble((marble + 1) as SelectedMarbles));
+        const nextPos = findNextPosition(pos);
+        if (nextPos.length > 0) {
+          dispatch(selectMarble((marble + 1) as SelectedMarbles));
+        }
       }
     } else {
       const idx = [...player1, ...player2].findIndex((el) => el === pos);
@@ -92,13 +106,7 @@ const Tikadi = () => {
         return false;
       }
 
-      const nextPossiblePos = getNextPossibleTikadiPositions(num);
-      const nextPos = nextPossiblePos.filter((el) => {
-        if ([...player1, ...player2].includes(el as Position)) {
-          return false;
-        }
-        return true;
-      });
+      const nextPos = findNextPosition(num);
 
       return nextPos.length > 0;
     }

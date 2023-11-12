@@ -112,6 +112,85 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
     };
 
+    const cancelInvitationHandler = (obj: any) => {
+      if (obj && obj.from && obj.to === uuid) {
+        dispatch(updateInvitation(null));
+        toast.info(`${obj.from.name} has cancelled the invitation.`);
+      }
+    };
+
+    const acceptInvitationHandler = (obj: any) => {
+      if (obj && obj.room && obj.from && obj.to === uuid) {
+        dispatch(updateInvitation(null));
+        localStorage.setItem('duel-room', JSON.stringify(obj.room));
+        createOrJoinRoom(obj.room);
+        router.push('/play');
+      }
+    };
+
+    const updateInvitationHandler = (obj: any) => {
+      if (obj && obj.from && obj.to === uuid) {
+        dispatch(updateInvitation({ from: { ...obj.from, isOnline: true } }));
+      }
+    };
+
+    const joinRoomHandler = (players: any) => {
+      console.log('USER_JOINED_ROOM:', players);
+      const opponentPlayer: Player = players.find(
+        (p: Player) => p.uuid !== uuid
+      );
+      if (opponentPlayer) {
+        dispatch(
+          updateOpponentPlayer({
+            name: opponentPlayer.name,
+            uuid: opponentPlayer.uuid,
+            isOnline: true,
+          })
+        );
+      }
+    };
+
+    const leaveRoomHandler = (player: any) => {
+      console.log('USER_LEFT_ROOM', player);
+      if (player && player.uuid !== uuid) {
+        dispatch(
+          updateOnlineStatus({
+            uuid: player.uuid,
+            isOnline: false,
+          })
+        );
+      }
+    };
+
+    const gameStateChangeHandler = (state: any) => {
+      console.log('GAME_STATE_CHANGE', state);
+      console.log('GAME_STATE_CHANGE otherPlayer', otherPlayer);
+      if (otherPlayer) {
+        dispatch(
+          updateGameState({
+            player1: state[uuid],
+            player2: state[otherPlayer.uuid],
+            turn:
+              state.turn === uuid
+                ? PlayerTurn.currentPlayer
+                : PlayerTurn.otherPlayer,
+          })
+        );
+        dispatch(
+          updatePlayersScores({
+            player1: state.scores[uuid],
+            player2: state.scores[otherPlayer.uuid],
+          })
+        );
+      }
+    };
+
+    const playAgainHandler = (player: Player) => {
+      if (player && player.uuid !== uuid) {
+        dispatch(updateRestartState(true));
+      }
+    };
+
     if (socket && uuid && name) {
       socket.emit(EmitTypes.ONLINE, {
         uuid: uuid,
@@ -120,91 +199,28 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       socket.on(EmitTypes.NEW_USER, onNewUserAdded);
 
-      socket?.on(EmitTypes.USER_JOINED_ROOM, (players) => {
-        console.log('USER_JOINED_ROOM:', players);
-        const opponentPlayer: Player = players.find(
-          (p: Player) => p.uuid !== uuid
-        );
-        if (opponentPlayer) {
-          dispatch(
-            updateOpponentPlayer({
-              name: opponentPlayer.name,
-              uuid: opponentPlayer.uuid,
-              isOnline: true,
-            })
-          );
-        }
-      });
+      socket?.on(EmitTypes.USER_JOINED_ROOM, joinRoomHandler);
 
-      socket?.on(EmitTypes.USER_LEFT_ROOM, (player) => {
-        console.log('USER_LEFT_ROOM', player);
-        if (player && player.uuid !== uuid) {
-          dispatch(
-            updateOnlineStatus({
-              uuid: player.uuid,
-              isOnline: false,
-            })
-          );
-        }
-      });
+      socket?.on(EmitTypes.USER_LEFT_ROOM, leaveRoomHandler);
 
       socket.on(EmitTypes.NEW_MESSAGE_IN_ROOM, newMsgHandler);
 
-      socket.on(EmitTypes.GAME_STATE_CHANGE, (state) => {
-        console.log('GAME_STATE_CHANGE', state);
-        console.log('GAME_STATE_CHANGE otherPlayer', otherPlayer);
-        if (otherPlayer) {
-          dispatch(
-            updateGameState({
-              player1: state[uuid],
-              player2: state[otherPlayer.uuid],
-              turn:
-                state.turn === uuid
-                  ? PlayerTurn.currentPlayer
-                  : PlayerTurn.otherPlayer,
-            })
-          );
-          dispatch(
-            updatePlayersScores({
-              player1: state.scores[uuid],
-              player2: state.scores[otherPlayer.uuid],
-            })
-          );
-        }
-      });
+      socket.on(EmitTypes.GAME_STATE_CHANGE, gameStateChangeHandler);
 
-      socket.on(EmitTypes.PLAY_AGAIN, (player: Player) => {
-        if (player && player.uuid !== uuid) {
-          dispatch(updateRestartState(true));
-        }
-      });
+      socket.on(EmitTypes.PLAY_AGAIN, playAgainHandler);
 
-      socket.on(EmitTypes.REQUEST_TO_PLAY, (obj) => {
-        if (obj && obj.from && obj.to === uuid) {
-          dispatch(updateInvitation({ from: { ...obj.from, isOnline: true } }));
-        }
-      });
+      socket.on(EmitTypes.REQUEST_TO_PLAY, updateInvitationHandler);
 
-      socket.on(EmitTypes.CANCEL_INVITATION, (obj) => {
-        if (obj && obj.from && obj.to === uuid) {
-          dispatch(updateInvitation(null));
-          toast.info(`${obj.from.name} has cancelled the invitation.`);
-        }
-      });
+      socket.on(EmitTypes.CANCEL_INVITATION, cancelInvitationHandler);
 
-      socket.on(EmitTypes.ACCEPT_INVITATION, (obj) => {
-        if (obj && obj.room && obj.from && obj.to === uuid) {
-          dispatch(updateInvitation(null));
-          localStorage.setItem('duel-room', JSON.stringify(obj.room));
-          createOrJoinRoom(obj.room);
-          router.push('/play');
-        }
-      });
+      socket.on(EmitTypes.ACCEPT_INVITATION, acceptInvitationHandler);
     }
 
     return () => {
       console.log('ROOT CLEANING UP');
       socket?.off(EmitTypes.NEW_MESSAGE_IN_ROOM, newMsgHandler);
+      socket?.off(EmitTypes.CANCEL_INVITATION, cancelInvitationHandler);
+      socket?.off(EmitTypes.ACCEPT_INVITATION, acceptInvitationHandler);
       window.addEventListener('unload', function () {
         socket?.disconnect(true);
         console.log('UNLOADED');

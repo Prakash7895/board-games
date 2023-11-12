@@ -1,17 +1,20 @@
 'use client';
 import { playerState } from '@/store/playerSlice';
 import Image from 'next/image';
-import React, { useContext, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useContext, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import AlertConfirmation from './AlertConfirmation';
 import { SocketContext } from './SocketProvider';
 import { EmitTypes } from '@/types';
 import { userState } from '@/store/userSlice';
+import { duelState, updateInvitation } from '@/store/duelSlice';
 
 const OnlinePlayers = () => {
   const { players } = useSelector(playerState);
   const { name, uuid } = useSelector(userState);
+  const { invitation } = useSelector(duelState);
   const [show, setShow] = useState(false);
+  const dispatch = useDispatch();
 
   const { socket } = useContext(SocketContext);
 
@@ -22,7 +25,14 @@ const OnlinePlayers = () => {
       name,
     });
     setShow(true);
+    dispatch(updateInvitation({ to: { name, uuid, isOnline: true } }));
   };
+
+  useEffect(() => {
+    if (!invitation) {
+      setShow(false);
+    }
+  }, [invitation]);
 
   return (
     <div className='w-full flex gap-4 overflow-x-auto h-56 justify-center'>

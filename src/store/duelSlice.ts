@@ -19,7 +19,8 @@ interface DuelState {
   room: string;
   restart: boolean;
   invitation: {
-    from: Player;
+    from?: Player;
+    to?: Player;
   } | null;
 }
 
@@ -89,7 +90,7 @@ export const duelSlice = createSlice({
     },
     updateInvitation: (
       state: DuelState,
-      { payload }: PayloadAction<{ from: Player } | null>
+      { payload }: PayloadAction<{ from?: Player; to?: Player } | null>
     ) => {
       state.invitation = payload;
     },
