@@ -2,7 +2,7 @@
 import { Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { io } from 'socket.io-client';
-import React, { useEffect, ReactNode, useState } from 'react';
+import React, { useEffect, ReactNode, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUser, userState } from '@/store/userSlice';
 import { EmitTypes, PlayerTurn, cbArgs } from '@/types';
@@ -65,7 +65,7 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       dispatch(updateUser({ uuid: uuidToUse, name: savedName }));
       localStorage.setItem('uuid', JSON.stringify(uuidToUse));
     }
-  }, [uuid, name]);
+  }, [uuid, name, dispatch]);
 
   useEffect(() => {
     async function initSocket() {
@@ -87,6 +87,18 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       initSocket();
     }
   }, [uuid, name]);
+
+  const createOrJoinRoom = useCallback(
+    (room: string, cb?: (res: cbArgs) => void) => {
+      console.log('Creating room on UI', room);
+      if (room) {
+        socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim(), (res: any) => {
+          cb && cb(res);
+        });
+      }
+    },
+    [socket]
+  );
 
   useEffect(() => {
     const onNewUserAdded = (users: Player[]) => {
@@ -225,22 +237,13 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         console.log('UNLOADED');
       });
     };
-  }, [socket, uuid, name, otherPlayer]);
+  }, [socket, uuid, name, otherPlayer, router, dispatch, createOrJoinRoom]);
 
   const emitMessage = (msg: string) => {
     socket?.emit(EmitTypes.EMIT_MESSAGE, {
       from: { uuid: uuid, name: name },
       message: msg,
     });
-  };
-
-  const createOrJoinRoom = (room: string, cb?: (res: cbArgs) => void) => {
-    console.log('Creating room on UI', room);
-    if (room) {
-      socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, room.trim(), (res: any) => {
-        cb && cb(res);
-      });
-    }
   };
 
   const sendMessageToRoom = (msg: string, room: string) => {

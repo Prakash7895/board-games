@@ -28,7 +28,7 @@ const NameConfirmation: React.FC<{
         })
       );
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setName(currName);

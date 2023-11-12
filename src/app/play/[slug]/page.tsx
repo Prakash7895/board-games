@@ -26,6 +26,8 @@ import AlertConfirmation from '@/components/AlertConfirmation';
 import { resetChatState } from '@/store/chatSlice';
 import { toast } from 'react-toastify';
 import { getRandom } from '@/utils';
+import Image from 'next/image';
+import Tooltip from '@/components/Tooltip';
 
 export default function PlayGround({ params }: { params: { slug: string } }) {
   const roomName = params.slug;
@@ -53,7 +55,7 @@ export default function PlayGround({ params }: { params: { slug: string } }) {
     return () => {
       clearTimeout(interVal);
     };
-  }, [winner]);
+  }, [winner, dispatch, turn]);
 
   const getLabel = () => {
     if (winner > 0) {
@@ -93,13 +95,13 @@ export default function PlayGround({ params }: { params: { slug: string } }) {
         })
       );
     }
-  }, [room, otherPlayer]);
+  }, [room, otherPlayer, dispatch, savedRoom]);
 
   useEffect(() => {
     if (room && otherPlayer) {
       setGameInitialized(true);
     }
-  }, []);
+  }, [room, otherPlayer]);
 
   useEffect(() => {
     if (name || uuid) {
@@ -121,7 +123,7 @@ export default function PlayGround({ params }: { params: { slug: string } }) {
     return () => {
       clearTimeout(interval);
     };
-  }, [room, socket, name, uuid]);
+  }, [room, socket, name, uuid, createOrJoinRoom, dispatch, opponentType]);
 
   const goHomeHandler = () => {
     if (opponentType === OpponentType.player) {
@@ -141,7 +143,7 @@ export default function PlayGround({ params }: { params: { slug: string } }) {
         socket?.emit(EmitTypes.LEAVE_ROOM, savedRoom);
       }
     };
-  }, [socket]);
+  }, [socket, savedRoom]);
 
   return (
     <div className='min-h-screen p-5'>
@@ -205,14 +207,18 @@ export default function PlayGround({ params }: { params: { slug: string } }) {
         {opponentType === OpponentType.player && (
           <div className='text-center flex items-center justify-center gap-2'>
             <p>Share this room id with your friend: {room}</p>
-            <img
-              src='/copy.svg'
-              className='w-7 h-7 cursor-pointer'
-              title='Click to copy room id'
-              onClick={() => {
-                navigator.clipboard.writeText(room);
-              }}
-            />
+            <Tooltip tooltip='Click to copy room id'>
+              <Image
+                width={28}
+                height={28}
+                src='/copy.svg'
+                alt='copy icon'
+                className='cursor-pointer'
+                onClick={() => {
+                  navigator.clipboard.writeText(room);
+                }}
+              />
+            </Tooltip>
           </div>
         )}
       </div>

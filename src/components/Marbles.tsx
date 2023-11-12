@@ -12,13 +12,26 @@ import { resetScoreState, scoreState } from '@/store/scoreSlice';
 import { SocketContext } from './SocketProvider';
 import { resetChatState } from '@/store/chatSlice';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export const coinOne = (
-  <img src={'/coin-one.svg'} className={`w-10 h-10 cursor-pointer`} />
+  <Image
+    width={40}
+    height={40}
+    alt='coin one icon'
+    src={'/coin-one.svg'}
+    className={`cursor-pointer`}
+  />
 );
 
 export const coinTwo = (
-  <img src={'/coin-two.svg'} className={`w-10 h-10 cursor-pointer`} />
+  <Image
+    width={40}
+    height={40}
+    alt='coin two icon'
+    src={'/coin-two.svg'}
+    className={`cursor-pointer`}
+  />
 );
 
 const Marbles = () => {

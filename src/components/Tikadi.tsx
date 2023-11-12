@@ -130,7 +130,7 @@ const Tikadi = () => {
     return () => {
       clearTimeout(interVal);
     };
-  }, [turn, opponentType]);
+  }, [turn, opponentType, player1, player2, dispatch]);
 
   const circle = (num: Position) => (
     <div
