@@ -1,23 +1,20 @@
 'use client';
-import { Message } from '@/types';
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import { SocketContext } from './SocketProvider';
 import { useDispatch, useSelector } from 'react-redux';
 import { appendMessage, chatState } from '@/store/chatSlice';
 
-const ChatWindow = () => {
+const ChatWindow: React.FC<{ room: string }> = ({ room }) => {
   const dispatch = useDispatch();
   const ref = useRef<HTMLDivElement>(null);
   const { chats } = useSelector(chatState);
   const [message, setMessage] = useState('');
-  const value = localStorage.getItem('duel-room');
-  const savedRoom = value ? JSON.parse(value) : null;
 
   const { sendMessageToRoom } = useContext(SocketContext);
 
   const sendMessage = () => {
     if (message.trim().length) {
-      sendMessageToRoom(message, savedRoom);
+      sendMessageToRoom(message, room);
       dispatch(
         appendMessage({
           isIncoming: false,

@@ -122,9 +122,8 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const acceptInvitationHandler = (obj: any) => {
       if (obj && obj.room && obj.from && obj.to === uuid) {
         dispatch(updateInvitation(null));
-        localStorage.setItem('duel-room', JSON.stringify(obj.room));
         createOrJoinRoom(obj.room);
-        router.push('/play');
+        router.push(`/play/${obj.room}`);
       }
     };
 

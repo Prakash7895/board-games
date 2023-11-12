@@ -13,7 +13,7 @@ const Welcome = () => {
       Welcome, {name}{' '}
       <img
         title='Edit Name'
-        src={'./edit.svg'}
+        src={'/edit.svg'}
         className={`w-6 h-6 cursor-pointer`}
         onClick={() => setShow(true)}
       />

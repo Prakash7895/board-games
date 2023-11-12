@@ -28,17 +28,15 @@ const StartCTAs = () => {
   const createRoom = () => {
     resetRootState();
     const newRoom = getUniqueRoomName();
-    localStorage.setItem('duel-room', JSON.stringify(newRoom));
-    router.push('/play');
+    router.push(`/play/${newRoom}`);
   };
 
   const joinRoom = () => {
     resetRootState();
-    localStorage.setItem('duel-room', JSON.stringify(roomName));
     createOrJoinRoom(roomName, (res) => {
       console.log('RESPONSE:', res);
       if (res.status) {
-        router.push('/play');
+        router.push(`/play/${roomName}`);
       } else {
         toast.error(res.message);
       }
@@ -47,11 +45,10 @@ const StartCTAs = () => {
 
   const startNewGame = () => {
     resetRootState();
-    localStorage.removeItem('duel-room');
     dispatch(
       initializeGame({ opponentType: OpponentType.bot, turn: getRandom(1, 3) })
     );
-    router.push('/play');
+    router.push(`/play/${OpponentType.bot}`);
   };
 
   return (

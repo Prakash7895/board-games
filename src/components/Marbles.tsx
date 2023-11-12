@@ -14,11 +14,11 @@ import { resetChatState } from '@/store/chatSlice';
 import { useRouter } from 'next/navigation';
 
 export const coinOne = (
-  <img src={'./coin-one.svg'} className={`w-10 h-10 cursor-pointer`} />
+  <img src={'/coin-one.svg'} className={`w-10 h-10 cursor-pointer`} />
 );
 
 export const coinTwo = (
-  <img src={'./coin-two.svg'} className={`w-10 h-10 cursor-pointer`} />
+  <img src={'/coin-two.svg'} className={`w-10 h-10 cursor-pointer`} />
 );
 
 const Marbles = () => {
@@ -39,7 +39,6 @@ const Marbles = () => {
     if (opponentType === OpponentType.player) {
       socket?.emit(EmitTypes.LEAVE_ROOM, room);
     }
-    localStorage.removeItem('duel-room');
     dispatch(updateRestartState(false));
     dispatch(resetTikadiState());
     dispatch(resetScoreState());

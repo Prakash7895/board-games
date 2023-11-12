@@ -41,14 +41,13 @@ export default function Home() {
   const acceptInvite = () => {
     resetRootState();
     const newRoom = getUniqueRoomName();
-    localStorage.setItem('duel-room', JSON.stringify(newRoom));
     socket?.emit(EmitTypes.ACCEPT_INVITATION, {
       room: newRoom,
       to: invitation?.from?.uuid,
       from: { uuid, name },
     });
     socket?.emit(EmitTypes.CREATE_OR_JOIN_ROOM, newRoom);
-    router.push('/play');
+    router.push(`/play/${newRoom}`);
   };
 
   return (

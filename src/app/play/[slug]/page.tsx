@@ -27,7 +27,9 @@ import { resetChatState } from '@/store/chatSlice';
 import { toast } from 'react-toastify';
 import { getRandom } from '@/utils';
 
-export default function PlayGround() {
+export default function PlayGround({ params }: { params: { slug: string } }) {
+  const roomName = params.slug;
+  const savedRoom = roomName === OpponentType.bot ? null : roomName;
   const router = useRouter();
   const dispatch = useDispatch();
   const { name, uuid } = useSelector(userState);
@@ -71,9 +73,6 @@ export default function PlayGround() {
   };
 
   useEffect(() => {
-    const value = localStorage.getItem('duel-room');
-    const savedRoom = value ? JSON.parse(value) : null;
-
     if (savedRoom && savedRoom !== room) {
       dispatch(updateRoom(savedRoom));
 
@@ -128,7 +127,6 @@ export default function PlayGround() {
     if (opponentType === OpponentType.player) {
       socket?.emit(EmitTypes.LEAVE_ROOM, room);
     }
-    localStorage.removeItem('duel-room');
     dispatch(updateRestartState(false));
     dispatch(resetTikadiState());
     dispatch(resetScoreState());
@@ -138,9 +136,6 @@ export default function PlayGround() {
   };
 
   useEffect(() => {
-    const value = localStorage.getItem('duel-room');
-    const savedRoom = value ? JSON.parse(value) : null;
-
     return () => {
       if (savedRoom) {
         socket?.emit(EmitTypes.LEAVE_ROOM, savedRoom);
@@ -211,7 +206,7 @@ export default function PlayGround() {
           <div className='text-center flex items-center justify-center gap-2'>
             <p>Share this room id with your friend: {room}</p>
             <img
-              src='./copy.svg'
+              src='/copy.svg'
               className='w-7 h-7 cursor-pointer'
               title='Click to copy room id'
               onClick={() => {
@@ -229,7 +224,7 @@ export default function PlayGround() {
             {opponentType === OpponentType.bot ? (
               <ScoreBoard />
             ) : (
-              <ChatWindow />
+              <ChatWindow room={savedRoom!} />
             )}
           </>
         )}
