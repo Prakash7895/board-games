@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import {
   EmitTypes,
   OpponentType,
@@ -34,6 +34,7 @@ const Tikadi = () => {
   const { room, otherPlayer, currentPlayer } = useSelector(duelState);
   const dispatch = useDispatch();
   const { socket } = useContext(SocketContext);
+  const ref = useRef<HTMLDivElement>(null);
 
   const findNextPosition = (num: Position) => {
     const nextPossiblePos = getNextPossibleTikadiPositions(num);
@@ -162,8 +163,13 @@ const Tikadi = () => {
         ])
       : -1;
 
-  const rod = (className: string, idx: number, isVertical?: boolean) => (
-    <div className={`bg-custom-primary ${className} mx-5`}>
+  const rod = (
+    className: string,
+    idx: number,
+    isVertical?: boolean,
+    style?: React.CSSProperties
+  ) => (
+    <div className={`bg-custom-primary ${className} mx-5`} style={style}>
       <div
         className={`bg-sky-500 ${
           idx === winIdx
@@ -176,8 +182,13 @@ const Tikadi = () => {
     </div>
   );
 
+  const diagonalHeight = (ref.current?.offsetWidth ?? 1) * 1.25;
+
   return (
-    <div className='aspect-square h-[30rem] relative mx-auto'>
+    <div
+      ref={ref}
+      className='aspect-square w-full lg:w-fit lg:h-[30rem] relative mx-auto'
+    >
       <div className='w-full h-full flex flex-col justify-between z-10 relative'>
         {threeCircles(1)}
         {threeCircles(4)}
@@ -198,12 +209,18 @@ const Tikadi = () => {
         </div>
       </div>
       <div className='absolute top-0 bottom-0 left-0 right-0 z-0 p-0'>
-        {rod('w-[38rem] h-2 mt-[22px] ml-[27px] rotate-45 origin-top-left', 6)}
+        {rod(`h-2 mt-[22px] ml-[27px] rotate-45 origin-top-left`, 6, false, {
+          width: `${diagonalHeight}px`,
+        })}
       </div>
       <div className='absolute bottom-0 left-0 right-0 z-0 p-0'>
         {rod(
-          'w-[38rem] h-2 mb-[22px] ml-[28px] -rotate-45 origin-bottom-left',
-          7
+          `h-2 mb-[22px] ml-[28px] -rotate-45 origin-bottom-left`,
+          7,
+          false,
+          {
+            width: `${diagonalHeight}px`,
+          }
         )}
       </div>
     </div>

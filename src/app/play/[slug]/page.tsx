@@ -222,7 +222,7 @@ export default function PlayGround({ params }: { params: { slug: string } }) {
           </div>
         )}
       </div>
-      <div className='flex justify-around h-full w-full'>
+      <div className='flex justify-around h-full w-full flex-col lg:flex-row gap-10'>
         {winner === PlayerTurn.currentPlayer && <Confetti />}
         {gameInitialized && (
           <>
