@@ -34,6 +34,12 @@ const NameConfirmation: React.FC<{
     setName(currName);
   }, [currName, visible]);
 
+  useEffect(() => {
+    if (currName.trim().length) {
+      setShow(false);
+    }
+  }, [currName]);
+
   return show || visible ? (
     <Dialog>
       <div className='flex flex-col gap-4 py-2'>

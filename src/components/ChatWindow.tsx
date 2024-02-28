@@ -40,7 +40,7 @@ const ChatWindow: React.FC<{ room: string }> = ({ room }) => {
           placeholder='Enter a message'
           onChange={(e) => setMessage(e.target.value)}
           onKeyUp={(e) => e.key === 'Enter' && sendMessage()}
-          className='input w-full max-w-xs bg-transparent !border-0 !outline-none !rounded-none !bg-custom-primary'
+          className='input w-full bg-transparent !border-0 !outline-none !rounded-none !bg-custom-primary'
         />
         <button
           className='btn bg-custom-primary rounded-none border-0 btn-outline'
